@@ -39,35 +39,24 @@
         }
     }
     ```
-3. 在项目中引入单群聊 UIKit 。
+3. 在项目中引入单群聊 UIKit
 
-在 `/Gradle Scripts/build.gradle(Module: app)` 中, 添加单群聊 UIKit到项目中:
+从 GitHub 获取[单群聊 UIKit](https://github.com/easemob/chatuikit-android) 源码，按照下面的方式集成：
+
+- 在根目录 `settings.gradle.kts` 文件（/Gradle Scripts/settings.gradle.kts）中添加如下代码：
 
 ```kotlin
-android {
-    compileSdk = 34
-    defaultConfig {
-        // The Android OS version should be 21 or higher.
-        minSdk = 21
-    }
-    buildFeatures{
-        viewBinding = true
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
-}
-dependencies {
-    ...
-    // Replace X.Y.Z with the latest version of the Chat UIKit. 
-    // For the latest version, go to https://search.maven.org/.
-    implementation("io.hyphenate:ease-im-kit:X.Y.Z")
-}
+include(":ease-im-kit")
+project(":ease-im-kit").projectDir = File("../chatuikit-android/ease-im-kit")
 ```
+
+- 在 app 的 `build.gradle.kts` 文件（/Gradle Scripts/build.gradle）中添加如下代码：
+
+```kotlin
+//chatuikit-android
+implementation(project(mapOf("path" to ":ease-im-kit")))
+```
+
 4. 防止代码混淆
 
 在 `/Gradle Scripts/proguard-rules.pro` 文件中添加如下代码：

@@ -45,7 +45,7 @@ class MainActivity : AppCompatActivity(), ChatConnectionListener {
     }
 
     private fun initListener() {
-        EaseIM.subscribeConnectionDelegates(this)
+        EaseIM.addConnectionListener(this)
     }
 
     fun login(view: View) {
@@ -113,7 +113,7 @@ class MainActivity : AppCompatActivity(), ChatConnectionListener {
 
     override fun onDestroy() {
         super.onDestroy()
-        EaseIM.unsubscribeConnectionDelegates(this)
+        EaseIM.removeConnectionListener(this)
     }
 
     companion object {

@@ -55,24 +55,6 @@ dependencyResolutionManagement {
 }
 ```
 
-在项目的 /app/build.gradle 文件添加 ease-im-kit 依赖项（X.Y.Z 为当前版本号）。
-
-```kotlin
-android {
-
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-}
-dependencies {
-    ...
-    // 将 X.Y.Z 替换为当前版本号
-    implementation 'io.hyphenate:ease-im-kit:X.Y.Z'
-}
-```
-<div class="alert note"><ul><li>获取最新版本的 uikit , 请转到 <a href="https://search.maven.org/search?q=a:ease-im-kit">Sonatype</a>.</li></ul></div>
-
 ### Module 源码集成
 
 从 github 获取 [Chat UIKit](https://github.com/easemob/chatuikit-android) 源码，按照下面的方式集成：
@@ -879,23 +861,6 @@ EaseMultiDeviceEventConfig 提供的配置项解释：
 |--------------------------------------|-------------------|
 | useDefaultMultiDeviceContactEvent    | 是否启用默认的多设备联系人事件处理 |
 | useDefaultMultiDeviceGroupEvent      | 是否启用默认的多设备群组事件处理  |
-
-## 使用默认标题栏
-UIKit 的 fragment 中默认提供了基于`EaseTitleBar`的标题栏。`EaseTitleBar` 继承自 `MaterialToolbar`，另外增加了一些自定义属性，如下：
-```xml
-<!-- Set logo's size -->
-<attr name="titleBarLogoSize" format="dimension"/>
-<!-- Set menu item's title color -->
-<attr name="titleBarMenuTitleColor" format="color"/>
-<!-- Set menu icon tint -->
-<attr name="titleBarMenuIconTint" format="color"/>
-<!-- Whether to enable the home as up function -->
-<attr name="titleBarDisplayHomeAsUpEnabled" format="boolean"/>
-<!-- Whether to replace the action bar of activity -->
-<attr name="titleBarReplaceActionBar" format="boolean"/>
-```
-- titleBarDisplayHomeAsUpEnabled 指是否显示标题栏左侧的返回按钮.
-- titleBarReplaceActionBar       指是否替换 AppCompatActivity 下的 ActionBar.
 
 ## UIKit 用户信息相关
 
