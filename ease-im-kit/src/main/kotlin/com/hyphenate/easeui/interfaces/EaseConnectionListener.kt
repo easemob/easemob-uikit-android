@@ -1,6 +1,7 @@
 package com.hyphenate.easeui.interfaces
 
 import com.hyphenate.easeui.common.ChatConnectionListener
+import com.hyphenate.easeui.common.ChatLoginExtensionInfo
 
 open class EaseConnectionListener:ChatConnectionListener {
 
@@ -12,7 +13,5 @@ open class EaseConnectionListener:ChatConnectionListener {
 
     override fun onTokenWillExpire() {}
 
-    override fun onLogout(errorCode: Int) {}
-
-    override fun onLogout(errorCode: Int, info: String?) {}
+    override fun onLogout(errorCode: Int, info: ChatLoginExtensionInfo?) {}
 }

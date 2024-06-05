@@ -4,6 +4,7 @@ import com.hyphenate.easeui.common.ChatGroupReadAck
 import com.hyphenate.easeui.common.ChatMessage
 import com.hyphenate.easeui.common.ChatMessageListener
 import com.hyphenate.easeui.common.ChatMessageReactionChange
+import com.hyphenate.easeui.common.ChatRecallMessageInfo
 
 open class EaseMessageListener: ChatMessageListener {
 
@@ -19,7 +20,7 @@ open class EaseMessageListener: ChatMessageListener {
 
     override fun onMessageDelivered(messages: MutableList<ChatMessage>?) {}
 
-    override fun onMessageRecalled(messages: MutableList<ChatMessage>?) {}
+    override fun onMessageRecalledWithExt(recallMessageInfo: MutableList<ChatRecallMessageInfo>?) {}
 
     override fun onReactionChanged(messageReactionChangeList: MutableList<ChatMessageReactionChange>?) {}
 

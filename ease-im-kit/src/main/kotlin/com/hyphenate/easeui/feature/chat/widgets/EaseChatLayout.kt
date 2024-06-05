@@ -31,6 +31,7 @@ import com.hyphenate.easeui.common.ChatMessageDirection
 import com.hyphenate.easeui.common.ChatMessageReactionChange
 import com.hyphenate.easeui.common.ChatMessageType
 import com.hyphenate.easeui.common.ChatPresence
+import com.hyphenate.easeui.common.ChatRecallMessageInfo
 import com.hyphenate.easeui.common.ChatTextMessageBody
 import com.hyphenate.easeui.common.ChatThread
 import com.hyphenate.easeui.common.ChatType
@@ -344,13 +345,15 @@ class EaseChatLayout @JvmOverloads constructor(
             refreshMessages(messages)
         }
 
-        override fun onMessageRecalled(messages: MutableList<ChatMessage>?) {
-            super.onMessageRecalled(messages)
+        override fun onMessageRecalledWithExt(recallMessageInfo: MutableList<ChatRecallMessageInfo>?) {
+            super.onMessageRecalledWithExt(recallMessageInfo)
             var isRefresh = false
-            if (messages != null && messages.size > 0) {
-                for (message in messages) {
-                    if (TextUtils.equals(message.conversationId(), conversationId)) {
-                        isRefresh = true
+            if (recallMessageInfo != null && recallMessageInfo.size > 0) {
+                for (message in recallMessageInfo) {
+                    message.recallMessage?.let {
+                        if (TextUtils.equals(it.conversationId(), conversationId)) {
+                            isRefresh = true
+                        }
                     }
                 }
             }

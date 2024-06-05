@@ -45,7 +45,7 @@ android {
 dependencies {
 
     implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.9.0")
 
     implementation("com.belerweb:pinyin4j:2.5.0")
@@ -71,10 +71,8 @@ dependencies {
     implementation("io.github.scwang90:refresh-layout-kernel:2.1.0")
     implementation("io.github.scwang90:refresh-header-material:2.1.0")
     // Chat SDK
-    api("io.hyphenate:hyphenate-chat:4.6.1")
+    api("io.hyphenate:hyphenate-chat:4.7.0")
 //    implementation(project(mapOf("path" to ":hyphenatechatsdk")))
 }
 
-//apply {
-//    from("../maven-push-release.gradle")
-//}
+//apply {from("../maven-push-release.gradle")}
