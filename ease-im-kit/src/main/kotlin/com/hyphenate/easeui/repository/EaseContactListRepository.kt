@@ -47,7 +47,7 @@ open class EaseContactListRepository(
     /**
      * Add a Contact
      */
-    suspend fun addContact(userName:String,reason:String?=""):Int =
+    suspend fun addContact(userName:String,reason:String?=""):String =
         withContext(Dispatchers.IO){
             chatContactManager.addNewContact(userName = userName,reason = reason)
         }
@@ -61,25 +61,35 @@ open class EaseContactListRepository(
         }
 
     /**
-     * Get blacklist list from server
+     * Get blocklist list from server
      */
-    suspend fun getBlackListFromServer():MutableList<String> =
+    suspend fun getBlockListFromServer():MutableList<EaseUser> =
         withContext(Dispatchers.IO){
             chatContactManager.fetchBlackListFromServer()
         }
 
     /**
-     * Add User to blacklist
+     * Get blocklist list from local
      */
-    suspend fun addUserToBlackList(userList:MutableList<String>):Int =
+    suspend fun getBlockListFromLocal():MutableList<EaseUser> =
+        withContext(Dispatchers.IO){
+            chatContactManager.blackListUsernames.map {
+                EaseIM.getUserProvider()?.getSyncUser(it)?.toUser() ?: EaseUser(it)
+            }.toMutableList()
+        }
+
+    /**
+     * Add User to blocklist
+     */
+    suspend fun addUserToBlockList(userList:MutableList<String>):Int =
         withContext(Dispatchers.IO){
             chatContactManager.addToBlackList(userList)
         }
 
     /**
-     * Remove User to blacklist
+     * Remove User to blocklist
      */
-    suspend fun removeUserFromBlackList(userName:String):Int =
+    suspend fun removeUserFromBlockList(userName:String):Int =
         withContext(Dispatchers.IO){
             chatContactManager.deleteUserFromBlackList(userName)
         }
@@ -103,10 +113,9 @@ open class EaseContactListRepository(
     /**
      * Fetch user information from user.
      */
-    suspend fun fetchContactInfo(contactList: List<EaseUser>) =
+    suspend fun fetchContactInfo(contactList: List<EaseUser>?) =
         withContext(Dispatchers.IO) {
-            val userList = contactList
-                .map { it.userId }
+            val userList = contactList?.map { it.userId }
             EaseIM.getUserProvider()?.fetchUsersBySuspend(userList)
         }
 }

@@ -60,6 +60,10 @@ object EaseIM {
         return client.isInited()
     }
 
+    fun releaseGlobalListener(){
+        client.releaseGlobalListener()
+    }
+
     /**
      * Temp for test.
      */
@@ -248,33 +252,8 @@ object EaseIM {
         return client.getCustomActivityRoute()
     }
 
-    /**
-     * Get presence info cache
-     */
-    fun getPresenceInfo():MutableMap<String,ChatPresence>{
-        return getCache().getPresenceInfo
-    }
-
-    fun getUserPresence(userId:String):ChatPresence?{
-        return getCache().getUserPresence(userId)
-    }
-
     fun checkMutedConversationList(userId:String):Boolean{
         return getCache().getMutedConversationList().containsKey(userId)
-    }
-
-    /**
-     * Is loaded contact data from server
-     */
-    fun isLoadedContactFromServer():Boolean{
-        return EasePreferenceManager.getInstance().isLoadedContactFromServer()
-    }
-
-    /**
-     * Set loaded contact data from server tag
-     */
-    fun setLoadedContactFromServer(){
-        EasePreferenceManager.getInstance().setLoadedContactFromServer(true)
     }
 
     /**
