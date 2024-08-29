@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import com.hyphenate.easeui.EaseIM
 import com.hyphenate.easeui.R
 import com.hyphenate.easeui.common.ChatCallback
-import com.hyphenate.easeui.viewmodel.EaseBaseViewModel
 import com.hyphenate.easeui.common.ChatClient
 import com.hyphenate.easeui.common.ChatCmdMessageBody
 import com.hyphenate.easeui.common.ChatConversation
@@ -20,25 +19,26 @@ import com.hyphenate.easeui.common.ChatMessageType
 import com.hyphenate.easeui.common.ChatTextMessageBody
 import com.hyphenate.easeui.common.ChatType
 import com.hyphenate.easeui.common.EaseConstant
+import com.hyphenate.easeui.common.enums.EaseReplyMap
 import com.hyphenate.easeui.common.extensions.addUserInfo
 import com.hyphenate.easeui.common.extensions.catchChatException
 import com.hyphenate.easeui.common.extensions.createUnsentMessage
 import com.hyphenate.easeui.common.extensions.isChatroom
 import com.hyphenate.easeui.common.extensions.isGroupChat
+import com.hyphenate.easeui.common.extensions.send
 import com.hyphenate.easeui.common.helper.EaseAtMessageHelper
 import com.hyphenate.easeui.common.impl.CallbackImpl
+import com.hyphenate.easeui.common.suspends.deleteMessage
 import com.hyphenate.easeui.common.utils.EaseFileUtils
+import com.hyphenate.easeui.common.utils.createExpressionMessage
 import com.hyphenate.easeui.feature.chat.enums.EaseChatType
+import com.hyphenate.easeui.feature.chat.enums.EaseLoadDataType
 import com.hyphenate.easeui.feature.chat.enums.getConversationType
+import com.hyphenate.easeui.feature.chat.forward.helper.EaseChatMessageMultiSelectHelper
 import com.hyphenate.easeui.feature.chat.interfaces.IHandleChatResultView
 import com.hyphenate.easeui.repository.EaseChatManagerRepository
-import com.hyphenate.easeui.common.enums.EaseReplyMap
-import com.hyphenate.easeui.common.extensions.send
-import com.hyphenate.easeui.common.suspends.deleteMessage
-import com.hyphenate.easeui.common.utils.createExpressionMessage
-import com.hyphenate.easeui.feature.chat.enums.EaseLoadDataType
-import com.hyphenate.easeui.feature.chat.forward.helper.EaseChatMessageMultiSelectHelper
-import com.hyphenate.easeui.repository.EasePresenceRepository
+import com.hyphenate.easeui.common.utils.EaseImageUtils
+import com.hyphenate.easeui.viewmodel.EaseBaseViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
@@ -52,7 +52,6 @@ open class EaseChatViewModel: EaseBaseViewModel<IHandleChatResultView>(), IChatV
     private var _loadDataType: EaseLoadDataType? = null
     private var _parentId: String? = null
     private val chatRepository by lazy { EaseChatManagerRepository() }
-    private val presenceRepository by lazy { EasePresenceRepository() }
 
     override fun setupWithToUser(
         toChatUsername: String?,
@@ -185,9 +184,17 @@ open class EaseChatViewModel: EaseBaseViewModel<IHandleChatResultView>(), IChatV
     }
 
     override fun sendImageMessage(imageUri: Uri?, sendOriginalImage: Boolean) {
+
         safeInConvScope {
+            //Compatible with web and does not support heif image terminal
+            //convert heif format to jpeg general image format
+            val uri = EaseImageUtils.handleImageHeifToJpeg(
+                EaseIM.getContext(),
+                imageUri,
+                it.messageAttachmentPath
+            )
             val message =
-                ChatMessage.createImageSendMessage(imageUri, sendOriginalImage, it.conversationId())
+                ChatMessage.createImageSendMessage(uri, sendOriginalImage, it.conversationId())
             sendMessage(message)
         }
     }
@@ -639,20 +646,6 @@ open class EaseChatViewModel: EaseBaseViewModel<IHandleChatResultView>(), IChatV
         }
     }
 
-    override fun fetchChatPresence(userIds: MutableList<String>) {
-        viewModelScope.launch {
-            flow {
-                emit(presenceRepository.fetchPresenceStatus(userIds))
-            }
-                .catchChatException { e->
-                    view?.onFetchChatPresenceFail(e.errorCode, e.description)
-                }
-                .collect {
-                    view?.onFetchChatPresenceSuccess(it)
-                }
-        }
-    }
-
     override fun getInProgressMessages() {
         viewModelScope.launch {
             safeInConvScope {
@@ -673,6 +666,48 @@ open class EaseChatViewModel: EaseBaseViewModel<IHandleChatResultView>(), IChatV
                     }))
                 }
             }
+        }
+    }
+
+    override fun pinMessage(message: ChatMessage?) {
+        viewModelScope.launch {
+            flow {
+                emit(chatRepository.pinMessage(message))
+            }
+                .catchChatException { e ->
+                    view?.onPinMessageFail(e.errorCode, e.description)
+                }
+                .collect {
+                    view?.onPinMessageSuccess(message)
+                }
+        }
+    }
+
+    override fun unPinMessage(message: ChatMessage?) {
+        viewModelScope.launch {
+            flow {
+                emit(chatRepository.unPinMessage(message))
+            }
+                .catchChatException { e ->
+                    view?.onUnPinMessageFail(e.errorCode, e.description)
+                }
+                .collect {
+                    view?.onUnPinMessageSuccess(message)
+                }
+        }
+    }
+
+    override fun fetchPinMessageFromServer(conversationId: String?) {
+        viewModelScope.launch {
+            flow {
+                emit(chatRepository.fetchPinMessageFromService(conversationId))
+            }
+                .catchChatException { e ->
+                    view?.onFetchPinMessageFromServerFail(e.errorCode, e.description)
+                }
+                .collect {
+                    view?.onFetchPinMessageFromServerSuccess(it)
+                }
         }
     }
 
@@ -697,4 +732,5 @@ open class EaseChatViewModel: EaseBaseViewModel<IHandleChatResultView>(), IChatV
     companion object {
         private val TAG = EaseChatViewModel::class.java.simpleName
     }
+
 }
