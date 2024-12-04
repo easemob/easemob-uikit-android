@@ -221,9 +221,9 @@ internal fun EaseChatMessageItemConfig.setTextMessageTextConfigs(content: TextVi
 internal fun EaseChatMessageItemConfig.resetBubbleBackground(bubble: ViewGroup?, isSender: Boolean) {
     bubble?.let {
         if (isSender) {
-            senderBackground?.run { it.background = this }
+            senderBackground?.run { it.background = this.mutate() }
         } else {
-            receiverBackground?.run { it.background = this }
+            receiverBackground?.run { it.background = this.mutate() }
         }
     }
 }
@@ -235,6 +235,6 @@ internal fun EaseChatMessageItemConfig.setTimeTextConfig(timeView: TextView?) {
     timeView?.let {
         if (timeTextSize != -1) it.textSize = timeTextSize.toFloat()
         if (timeTextColor != -1) it.setTextColor(timeTextColor)
-        timeBackground?.run { it.background = this }
+        timeBackground?.run { it.background = this.mutate() }
     }
 }
