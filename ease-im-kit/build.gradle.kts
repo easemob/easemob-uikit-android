@@ -64,14 +64,14 @@ dependencies {
     // coroutines android library
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     // RecyclerView
-    implementation("androidx.recyclerview:recyclerview:1.3.1")
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
     // Coil: load image library
     implementation("io.coil-kt:coil:2.5.0")
     // Refresh layout
     implementation("io.github.scwang90:refresh-layout-kernel:2.1.0")
     implementation("io.github.scwang90:refresh-header-material:2.1.0")
     // Chat SDK
-    api("io.hyphenate:hyphenate-chat:4.9.0")
+    api("io.hyphenate:hyphenate-chat:4.11.0")
 //    implementation(project(mapOf("path" to ":hyphenatechatsdk")))
 }
 
