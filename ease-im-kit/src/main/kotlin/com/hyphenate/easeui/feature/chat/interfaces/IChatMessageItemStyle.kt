@@ -34,17 +34,17 @@ interface IChatMessageItemStyle {
      * Set the background of the item sender.
      * After setting the parameter, should call the method [ChatUIKitMessageListLayout.notifyDataSetChanged]
      * to refresh the list.
-     * @param bgDrawable
+     * @param bg
      */
-    fun setItemSenderBackground(bgDrawable: Drawable?)
+    fun setItemSenderBackground(bg: Int?)
 
     /**
      * Set the receiver's background.
      * After setting the parameter, should call the method [ChatUIKitMessageListLayout.notifyDataSetChanged]
      * to refresh the list.
-     * @param bgDrawable
+     * @param bg
      */
-    fun setItemReceiverBackground(bgDrawable: Drawable?)
+    fun setItemReceiverBackground(bg: Int?)
 
     /**
      * Set text message font size.
