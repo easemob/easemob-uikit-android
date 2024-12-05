@@ -198,12 +198,12 @@ open class UIKitChatFragment: ChatUIKitBaseFragment<UikitFragmentChatBinding>(),
             val leftBubbleBg: Int = it.getInt(Constant.KEY_MSG_LEFT_BUBBLE, -1)
             if (leftBubbleBg != -1) {
                 binding?.layoutChat?.chatMessageListLayout?.
-                setItemReceiverBackground(ContextCompat.getDrawable(mContext, leftBubbleBg))
+                setItemReceiverBackground(leftBubbleBg)
             }
             val rightBubbleBg: Int = it.getInt(Constant.KEY_MSG_RIGHT_BUBBLE, -1)
             if (rightBubbleBg != -1) {
                 binding?.layoutChat?.chatMessageListLayout?.
-                setItemSenderBackground(ContextCompat.getDrawable(mContext, rightBubbleBg))
+                setItemSenderBackground(rightBubbleBg)
             }
             val showNickname: Boolean = it.getBoolean(Constant.KEY_SHOW_NICKNAME, false)
             binding?.layoutChat?.chatMessageListLayout?.showNickname(showNickname)

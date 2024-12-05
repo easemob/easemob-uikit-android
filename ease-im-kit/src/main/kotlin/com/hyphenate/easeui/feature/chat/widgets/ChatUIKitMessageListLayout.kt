@@ -489,16 +489,16 @@ class ChatUIKitMessageListLayout @JvmOverloads constructor(
      * After setting the parameter, should call the method [ChatUIKitMessageListLayout.notifyDataSetChanged]
      * to refresh the list.
      */
-    override fun setItemSenderBackground(bgDrawable: Drawable?) {
-        itemConfig.senderBackground = bgDrawable
+    override fun setItemSenderBackground(bg: Int?) {
+        itemConfig.senderBackground = bg
     }
 
     /**
      * After setting the parameter, should call the method [ChatUIKitMessageListLayout.notifyDataSetChanged]
      * to refresh the list.
      */
-    override fun setItemReceiverBackground(bgDrawable: Drawable?) {
-        itemConfig.receiverBackground = bgDrawable
+    override fun setItemReceiverBackground(bg: Int?) {
+        itemConfig.receiverBackground = bg
     }
 
     /**

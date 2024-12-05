@@ -71,11 +71,11 @@ data class ChatUIKitMessageItemConfig(
     /**
      * Set the receiver bubble background.
      */
-    var receiverBackground: Drawable? = null,
+    var receiverBackground: Int? = null,
     /**
      * Set the sender bubble background.
      */
-    var senderBackground: Drawable? = null,
+    var senderBackground: Int? = null,
     /**
      * Set the item show type.
      */
@@ -124,16 +124,10 @@ data class ChatUIKitMessageItemConfig(
                     if (it != -1) itemConfig.avatarConfig.avatarShape = ChatUIKitImageView.ShapeType.values()[it]
                 }
                 a.getResourceId(R.styleable.ChatUIKitMessageListLayout_ease_chat_item_sender_background, -1).let {
-                    if (it != -1) itemConfig.senderBackground = ContextCompat.getDrawable(context, it)
-                }
-                a.getDrawable(R.styleable.ChatUIKitMessageListLayout_ease_chat_item_sender_background)?.let {
-                    itemConfig.senderBackground = it
+                    if (it != -1) itemConfig.senderBackground = it
                 }
                 a.getResourceId(R.styleable.ChatUIKitMessageListLayout_ease_chat_item_receiver_background, -1).let {
-                    if (it != -1) itemConfig.receiverBackground = ContextCompat.getDrawable(context, it)
-                }
-                a.getDrawable(R.styleable.ChatUIKitMessageListLayout_ease_chat_item_receiver_background)?.let {
-                    itemConfig.receiverBackground = it
+                    if (it != -1) itemConfig.receiverBackground = it
                 }
                 a.getBoolean(R.styleable.ChatUIKitMessageListLayout_ease_chat_item_show_nickname, true).let {
                     itemConfig.showNickname = it
@@ -221,9 +215,9 @@ internal fun ChatUIKitMessageItemConfig.setTextMessageTextConfigs(content: TextV
 internal fun ChatUIKitMessageItemConfig.resetBubbleBackground(bubble: ViewGroup?, isSender: Boolean) {
     bubble?.let {
         if (isSender) {
-            senderBackground?.run { it.background = this.mutate() }
+            senderBackground?.run { it.setBackgroundResource(this) }
         } else {
-            receiverBackground?.run { it.background = this.mutate() }
+            receiverBackground?.run { it.setBackgroundResource(this) }
         }
     }
 }
@@ -235,6 +229,6 @@ internal fun ChatUIKitMessageItemConfig.setTimeTextConfig(timeView: TextView?) {
     timeView?.let {
         if (timeTextSize != -1) it.textSize = timeTextSize.toFloat()
         if (timeTextColor != -1) it.setTextColor(timeTextColor)
-        timeBackground?.run { it.background = this.mutate() }
+        timeBackground?.run { it.background = this }
     }
 }
