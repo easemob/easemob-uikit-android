@@ -116,17 +116,17 @@ dependencyResolutionManagement {
 
 ### Module remote dependency
 
-Add the following dependency to `build.gradle.kts` of the app project:
+Add the following dependency to `build.gradle.kts` of the app project,where `x.y.z` indicates the [latest version](https://central.sonatype.com/artifact/io.hyphenate/ease-chat-kit/versions):
 
 ```kotlin
 
-implementation("io.hyphenate:ease-chat-kit:4.11.1")
+implementation("io.hyphenate:ease-chat-kit:x.y.z")
 
 ```
 
 ### Integrate with the Module source code
 
-Acquire the Chat UIKit source code from the [GitHub repository](https://github.com/AgoraIO-Usecase/AgoraChat-UIKit-android/tree/dev-2) and integrate it in the following way:
+Acquire the Chat UIKit source code from the [GitHub repository](https://github.com/AgoraIO-Usecase/AgoraChat-UIKit-android/tree/dev-kotlin) and integrate it in the following way:
 
 1. Add the following code in the `settings.gradle.kts` file (/Gradle Scripts/settings.gradle.kts(Project Settings)) in the root directory.
 
