@@ -613,7 +613,7 @@ internal fun ChatMessage.hasThreadChat(): Boolean {
 }
 
 fun ChatMessage.isUrlPreviewMessage():Boolean{
-   return attributes.containsKey(ChatUIKitConstant.MESSAGE_URL_PREVIEW)
+   return ext().containsKey(ChatUIKitConstant.MESSAGE_URL_PREVIEW)
 }
 
 fun ChatMessage.parseUrlPreview():ChatUIKitPreview?{
