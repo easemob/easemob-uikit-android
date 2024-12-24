@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# sh convert_to_agora.sh
+# 使用说明：
+# 当需要转换成海外版本时：sh convert_to_agora.sh
 
 unamestr=`uname`
 
@@ -24,12 +25,13 @@ git checkout -f ; git clean -fd ; git checkout dev; git branch -D dev-agora; git
 
 echo "current branch :"
 git branch
-#更改包名及文件目录结构
+
+#1、更改包名及文件目录结构
 python3 script/convert_to_agora/change_package_name.py ./
-#对文件中的引用sdk类名进行国内->海外版本的替换
+#2、对文件中的引用sdk类名进行国内->海外版本的替换
 python3 script/convert_to_agora/rename_file_and_update_content.py ./ --replace-content
 
-
+#3、一些特殊处理
 #处理settings.gradle.kts
 $SED -i '/.*maven\.aliyun\.com.*/s/^/\/\// ' settings.gradle.kts
 #处理Readme.md
