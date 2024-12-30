@@ -13,10 +13,17 @@ else
     	echo "only Linux, MingW or Mac OS can be supported" &
     	exit 1
 fi
+echo "----------------- Start to convert -----------------"
 
+#是否打包成声网UIkit,默认Agora UIkit
+is_package_to_shengwang=false
 
+if [[ $1 = "--shengwang" ]];then
+		is_package_to_shengwang=true
+fi
 
-echo "----------------- Start convert to agora -----------------"
+echo "----------------- is_package_to_shengwang = $is_package_to_shengwang -----------------"
+
 # enter root dir
 cd ../../
 echo "当前路径：$(pwd)"
@@ -40,10 +47,40 @@ $SED -i 's/io\.hyphenate\:ease-chat-kit/io\.agora\.rtc\:chat-uikit/g' README.md
 $SED -i 's/io\.hyphenate\/ease-chat-kit/io\.agora\.rtc\/chat-uikit/g' README.zh.md
 $SED -i 's/io\.hyphenate\:ease-chat-kit/io\.agora\.rtc\:chat-uikit/g' README.zh.md
 
+#处理声网UIkit相关，appid替换appkey等
+if [[ $is_package_to_shengwang = "true" ]]; then
+  $SED -i 's/appkey/appId/g' quickstart/src/main/java/com/easemob/quickstart/MainActivity.kt
+  $SED -i 's/app_key/app_id/g' quickstart/src/main/java/com/easemob/quickstart/MainActivity.kt
+  $SED -i 's/AppKey/AppId/g' quickstart/src/main/java/com/easemob/quickstart/MainActivity.kt
+  $SED -i 's/appKey/appId/g' quickstart/src/main/java/com/easemob/quickstart/MainActivity.kt
+  $SED -i 's/app_key/app_id/g' quickstart/src/main/res/values/strings.xml
 
-git add . ; git commit -m "convert to agora"
+  $SED -i 's/APPKEY/APPID/g' app/src/main/kotlin/com/hyphenate/easeui/demo/DemoApplication.kt
+  $SED -i 's/appkey/appId/g' app/src/main/kotlin/com/hyphenate/easeui/demo/DemoApplication.kt
+  $SED -i 's/appKey/appId/g' app/src/main/kotlin/com/hyphenate/easeui/demo/DemoApplication.kt
+  $SED -i 's/APPKEY/APPID/g' app/build.gradle.kts
 
-echo "----------------- Finish convert to agora -----------------"
+  $SED -i 's/appKey/appId/g' README.md
+  $SED -i 's/appkey/appId/g' README.md
+  $SED -i 's/appKey/appId/g' README.zh.md
+  $SED -i 's/appkey/appId/g' README.zh.md
+
+  $SED -i 's/app_key/app_id/g' quickstart/README.md
+  $SED -i 's/appkey/appId/g' quickstart/README.md
+  $SED -i 's/appKey/appId/g' quickstart/README.md
+  $SED -i 's/AppKey/AppId/g' quickstart/README.md
+fi
+
+
+git add .
+if [[ $is_package_to_shengwang = "true" ]]; then
+   git commit -m "convert to shengwang"
+   echo "----------------- Finish convert to shengwang -----------------"
+else
+  git commit -m "convert to agora"
+  echo "----------------- Finish convert to agora -----------------"
+fi
+
 
 
 
