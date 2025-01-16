@@ -41,14 +41,29 @@ python3 script/convert_to_agora/rename_file_and_update_content.py ./ --replace-c
 #3、一些特殊处理
 #处理settings.gradle.kts
 $SED -i '/.*maven\.aliyun\.com.*/s/^/\/\// ' settings.gradle.kts
-#处理Readme.md
-$SED -i 's/io\.hyphenate\/ease-chat-kit/io\.agora\.rtc\/chat-uikit/g' README.md
-$SED -i 's/io\.hyphenate\:ease-chat-kit/io\.agora\.rtc\:chat-uikit/g' README.md
-$SED -i 's/io\.hyphenate\/ease-chat-kit/io\.agora\.rtc\/chat-uikit/g' README.zh.md
-$SED -i 's/io\.hyphenate\:ease-chat-kit/io\.agora\.rtc\:chat-uikit/g' README.zh.md
+#海外和声网版本暂时还没有匹配新uikit的demo，暂时注释掉
+$SED -i '/\#\# Product Experience/d' README.md
+$SED -i '/In this project*/d' README.md
+$SED -i '/If you want to experience*/d' README.md
+$SED -i '/.*demo\.png/d' README.md
+
+$SED -i '/\#\# 产品体验/d' README.zh.md
+$SED -i '/在这个项目中*/d' README.zh.md
+$SED -i '/如果你想体验*/d' README.zh.md
+$SED -i '/.*demo\.png/d' README.zh.md
+
 
 #处理声网UIkit相关，appid替换appkey等
 if [[ $is_package_to_shengwang = "true" ]]; then
+  #处理Readme.md
+  $SED -i 's/io\.hyphenate\/ease-chat-kit/cn\.shengwang\/chat-uikit/g' README.md
+  $SED -i 's/io\.hyphenate\:ease-chat-kit/cn\.shengwang\:chat-uikit/g' README.md
+  $SED -i 's/io\.hyphenate\/ease-chat-kit/cn\.shengwang\/chat-uikit/g' README.zh.md
+  $SED -i 's/io\.hyphenate\:ease-chat-kit/cn\.shengwang\:chat-uikit/g' README.zh.md
+  #替换github源码地址
+  $SED -i 's/easemob\/chatuikit\-android/Shengwang\-Community\/ShengwangChat\-UIKit\-android/g' README.zh.md
+  $SED -i 's/AgoraIO\-Usecase\/AgoraChat\-UIKit\-android\/tree\/dev\-kotlin/Shengwang\-Community\/ShengwangChat\-UIKit\-android/g' README.md
+
   $SED -i 's/appkey/appId/g' quickstart/src/main/java/com/easemob/quickstart/MainActivity.kt
   $SED -i 's/app_key/app_id/g' quickstart/src/main/java/com/easemob/quickstart/MainActivity.kt
   $SED -i 's/AppKey/AppId/g' quickstart/src/main/java/com/easemob/quickstart/MainActivity.kt
@@ -69,6 +84,12 @@ if [[ $is_package_to_shengwang = "true" ]]; then
   $SED -i 's/appkey/appId/g' quickstart/README.md
   $SED -i 's/appKey/appId/g' quickstart/README.md
   $SED -i 's/AppKey/AppId/g' quickstart/README.md
+else
+  #处理Readme.md
+  $SED -i 's/io\.hyphenate\/ease-chat-kit/io\.agora\.rtc\/chat-uikit/g' README.md
+  $SED -i 's/io\.hyphenate\:ease-chat-kit/io\.agora\.rtc\:chat-uikit/g' README.md
+  $SED -i 's/io\.hyphenate\/ease-chat-kit/io\.agora\.rtc\/chat-uikit/g' README.zh.md
+  $SED -i 's/io\.hyphenate\:ease-chat-kit/io\.agora\.rtc\:chat-uikit/g' README.zh.md
 fi
 
 
