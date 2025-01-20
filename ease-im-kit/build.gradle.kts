@@ -75,4 +75,6 @@ dependencies {
 //    implementation(project(mapOf("path" to ":hyphenatechatsdk")))
 }
 
-//apply {from("../maven-push-release.gradle")}
+//apply {from("../script/maven-push-release.gradle")}
+//apply {from("../script/maven-push-shengwang-release.gradle")}
+//apply {from("../script/maven-push-agora-release.gradle")}
