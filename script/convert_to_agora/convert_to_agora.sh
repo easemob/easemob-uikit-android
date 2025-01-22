@@ -59,7 +59,8 @@ else
 fi
 
 #2、更改包名及文件目录结构
-python3 script/convert_to_agora/change_package_name.py ./
+python3 script/convert_to_agora/change_package_name.py ./ "com.hyphenate.easeui" "io.agora.chat.uikit"
+python3 script/convert_to_agora/change_package_name.py ./ "com.easemob.quickstart" "io.agora.quickstart"
 #3、对文件中的引用sdk类名进行国内->海外版本的替换
 python3 script/convert_to_agora/rename_file_and_update_content.py ./ --replace-content
 
@@ -71,15 +72,15 @@ $SED -i '/.*maven\.aliyun\.com.*/s/^/\/\// ' settings.gradle.kts
 #处理声网UIkit相关，appid替换appkey等
 if [[ $is_package_to_shengwang = "true" ]]; then
 
-  $SED -i 's/appkey/appId/g' quickstart/src/main/java/com/easemob/quickstart/MainActivity.kt
-  $SED -i 's/app_key/app_id/g' quickstart/src/main/java/com/easemob/quickstart/MainActivity.kt
-  $SED -i 's/AppKey/AppId/g' quickstart/src/main/java/com/easemob/quickstart/MainActivity.kt
-  $SED -i 's/appKey/appId/g' quickstart/src/main/java/com/easemob/quickstart/MainActivity.kt
+  $SED -i 's/appkey/appId/g' quickstart/src/main/java/io/agora/quickstart/MainActivity.kt
+  $SED -i 's/app_key/app_id/g' quickstart/src/main/java/io/agora/quickstart/MainActivity.kt
+  $SED -i 's/AppKey/AppId/g' quickstart/src/main/java/io/agora/quickstart/MainActivity.kt
+  $SED -i 's/appKey/appId/g' quickstart/src/main/java/io/agora/quickstart/MainActivity.kt
   $SED -i 's/app_key/app_id/g' quickstart/src/main/res/values/strings.xml
 
-  $SED -i 's/APPKEY/APPID/g' app/src/main/kotlin/com/hyphenate/easeui/demo/DemoApplication.kt
-  $SED -i 's/appkey/appId/g' app/src/main/kotlin/com/hyphenate/easeui/demo/DemoApplication.kt
-  $SED -i 's/appKey/appId/g' app/src/main/kotlin/com/hyphenate/easeui/demo/DemoApplication.kt
+  $SED -i 's/APPKEY/APPID/g' app/src/main/kotlin/io/agora/chat/uikit/demo/DemoApplication.kt
+  $SED -i 's/appkey/appId/g' app/src/main/kotlin/io/agora/chat/uikit/demo/DemoApplication.kt
+  $SED -i 's/appKey/appId/g' app/src/main/kotlin/io/agora/chat/uikit/demo/DemoApplication.kt
   $SED -i 's/APPKEY/APPID/g' app/build.gradle.kts
 
 
