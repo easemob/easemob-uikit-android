@@ -126,16 +126,16 @@ implementation("io.hyphenate:ease-chat-kit:x.y.z")
 
 ### Integrate with the Module source code
 
-Acquire the Chat UIKit source code from the [GitHub repository](https://github.com/AgoraIO-Usecase/AgoraChat-UIKit-android/tree/dev-kotlin) and integrate it in the following way:
+Acquire the Chat UIKit source code from the [GitHub repository](https://github.com/easemob/easemob-uikit-android) and integrate it in the following way:
 
-1. Add the following code in the `settings.gradle.kts` file (/Gradle Scripts/settings.gradle.kts(Project Settings)) in the root directory.
+1. Add the following code in the `settings.gradle.kts` file Project/settings.gradle.kts(Project Settings) in the root directory.
 
 ```kotlin
 include(":chat-uikit")
-project(":chat-uikit").projectDir = File("../chatuikit-android/ease-im-kit")
+project(":chat-uikit").projectDir = File("../easemob-uikit-android/ease-im-kit")
 ```
 
-2. Add the following code in `build.gradle.kts` (/Gradle Scripts/build.gradle(Module: app)).
+2. Add the following code in `build.gradle.kts` (app/build.gradle(Module: app)).
 
 ```kotlin
 //chat-uikit
@@ -351,8 +351,8 @@ UIKitChatFragment
 
 ```kotlin
 // conversationID: 1v1 is peer's userID, group chat is groupID
-// easeChatType: SINGLE_CHAT, GROUP_CHAT
-UIKitChatFragment.Builder(conversationID, easeChatType)
+// chatType: SINGLE_CHAT, GROUP_CHAT
+UIKitChatFragment.Builder(conversationID, chatType)
         .useTitleBar(true)
         .setTitleBarTitle("title")
         .setTitleBarSubTitle("subtitle")
@@ -428,14 +428,14 @@ UIKitChatFragment#Builder provides the following methods:
 | setThreadMessage()                     | Sets whether to set the current conversation as a thread conversation: <br/> - true: Yes <br/> - (Default) false: No                      |
 | setTargetTranslationList()             | Sets the list of target languages for translation. You need to enable the translation function before calling this method.                        |
 | setEmptyLayout()                       | Sets the empty page for the chat list.                                    |
-| setCustomAdapter()                     | Sets a custom adapter. By default, EaseMessageAdapter is used.  |
+| setCustomAdapter()                     | Sets a custom adapter. By default, ChatUIKitMessagesAdapter is used.  |
 | setCustomFragment()                    | Sets the custom chat fragment by inheriting UIKitChatFragment.         |
 
 #### Add a custom message layout
 
-You can create a CustomMessageAdapter, CustomChatTypeViewViewHolder, and CustomTypeChatRow by inheriting EaseMessageAdapter, ChatUIKitRowViewHolder, and ChatUIKitRow, and then set CustomMessageAdapter to UIKitChatFragment#Builder#setCustomAdapter.
+You can create a CustomMessageAdapter, CustomChatTypeViewViewHolder, and CustomTypeChatRow by inheriting ChatUIKitMessagesAdapter, ChatUIKitRowViewHolder, and ChatUIKitRow, and then set CustomMessageAdapter to UIKitChatFragment#Builder#setCustomAdapter.
 
-(1) You can create a CustomMessageAdapter by inheriting EaseMessageAdapter and overwrite `getViewHolder` and `getItemNotEmptyViewType` methods.
+(1) You can create a CustomMessageAdapter by inheriting ChatUIKitMessagesAdapter and overwrite `getViewHolder` and `getItemNotEmptyViewType` methods.
 
 ```kotlin
 class CustomMessageAdapter: ChatUIKitMessagesAdapter() {
@@ -446,7 +446,7 @@ class CustomMessageAdapter: ChatUIKitMessagesAdapter() {
         return CUSTOM_YOUR_MESSAGE_TYPE
     }
 
-    override fun getViewHolder(parent: ViewGroup, viewType: Int): ViewHolder<EaseMessage> {
+    override fun getViewHolder(parent: ViewGroup, viewType: Int): ViewHolder<ChatMessage> {
         // Return the ViewHolder for the returned viewType.
         // Return the custom ViewHolder or use the default super.getViewHolder(parent, viewType).
         return CUSTOM_VIEW_HOLDER()
@@ -485,7 +485,7 @@ class CustomChatTypeViewViewHolder(
     itemView: View
 ): ChatUIKitRowViewHolder(itemView) {
 
-    override fun onBubbleClick(message: EaseMessage?) {
+    override fun onBubbleClick(message: ChatMessage?) {
         super.onBubbleClick(message)
         // Add click event
     }
@@ -514,7 +514,7 @@ class CustomMessageAdapter: ChatUIKitMessagesAdapter() {
         return super.getItemNotEmptyViewType(position)
     }
 
-    override fun getViewHolder(parent: ViewGroup, viewType: Int): ViewHolder<EaseMessage> {
+    override fun getViewHolder(parent: ViewGroup, viewType: Int): ViewHolder<ChatMessage> {
         // Return ViewHolder for the returned viewType. 
         if (viewType == VIEW_TYPE_MESSAGE_CUSTOM_VIEW_ME || viewType == VIEW_TYPE_MESSAGE_CUSTOM_VIEW_OTHER) {
             CustomChatTypeViewViewHolder(
@@ -877,7 +877,7 @@ ChatUIKitContactsListFragment#Builder provides the following methods:
 | setOnContactSelectedListener()   | Sets the contact item selection event listener.   |
 | setEmptyLayout()                 | Sets the blank page.    |
 | setCustomAdapter()               | Sets a custom adapter by inheriting ChatUIKitContactListAdapter.     |
-| setCustomFragment()              | Sets a custom chat fragment by inheriting EaseContactListFragment.       |
+| setCustomFragment()              | Sets a custom chat fragment by inheriting ChatUIKitContactsListFragment.       |
 
 #### Add a custom contact layout
 
@@ -922,7 +922,7 @@ ChatUIKitContactListLayout provides the following methods:
 | removeAdapter()                   | Removes an adapter.                                            |
 | addItemDecoration()               | Adds a contact list decorator.                                        |
 | removeItemDecoration()            | Removes a contact list decorator.                                       |
-| setOnItemClickListener()          | Sets the contact item click listener. Also, EaseContactListFragment#Builder provides the method to set the listener. |
+| setOnItemClickListener()          | Sets the contact item click listener. Also, ChatUIKitContactsListFragment#Builder provides the method to set the listener. |
 | setOnItemLongClickListener()      | Sets the item long-pressing listener.                                  |
 
 ## Global configurations
