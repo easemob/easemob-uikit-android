@@ -51,11 +51,14 @@ git branch
 
 # 1、替换readme文件内容
 if [[ $is_package_to_shengwang = "true" ]]; then
-  cp ../emclient-android/resfile/uikit-readme/shengwang/README.md README.md
-  cp ../emclient-android/resfile/uikit-readme/shengwang/README.zh.md README.zh.md
+  cp ../emclient-android/resfile/uikit/shengwang/README.md README.md
+  cp ../emclient-android/resfile/uikit/shengwang/README.zh.md README.zh.md
+  cp ../emclient-android/resfile/uikit/shengwang/quickstart/activity_main.xml quickstart/src/main/res/layout/activity_main.xml
+  cp ../emclient-android/resfile/uikit/shengwang/quickstart/MainActivity.kt quickstart/src/main/java/com/easemob/quickstart/MainActivity.kt
+  cp ../emclient-android/resfile/uikit/shengwang/quickstart/README.md quickstart/README.md
 else
-  cp ../emclient-android/resfile/uikit-readme/agora/README.md README.md
-  cp ../emclient-android/resfile/uikit-readme/agora/README.zh.md README.zh.md
+  cp ../emclient-android/resfile/uikit/agora/README.md README.md
+  cp ../emclient-android/resfile/uikit/agora/README.zh.md README.zh.md
 fi
 
 #2、更改包名及文件目录结构
