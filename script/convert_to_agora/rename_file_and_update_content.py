@@ -29,7 +29,7 @@ string_map.update(extra_strings_map)
 
 
 #特殊处理 例如.9.png等
-# string_map["ease_show_head_toast_bg"] = "chat_show_head_toast_bg"
+string_map["com.easemob.quickstart"] = "io.agora.quickstart"
 #string_map["ease_slidetab_bg_press"] = "chat_slidetab_bg_press"
 
 

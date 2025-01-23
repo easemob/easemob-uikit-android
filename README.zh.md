@@ -125,16 +125,16 @@ implementation("io.hyphenate:ease-chat-kit:x.y.z")
 
 ### Module 源码集成
 
-从 github 获取 [Chat UIKit](https://github.com/easemob/chatuikit-android) 源码，按照下面的方式集成：
+从 github 获取 [Chat UIKit](https://github.com/easemob/easemob-uikit-android) 源码，按照下面的方式集成：
 
 1. 在根目录 settings.gradle.kts 文件（/Gradle Scripts/settings.gradle.kts(Project Settings)）中添加如下代码：
 
 ```kotlin
 include(":ease-chat-kit")
-project(":ease-chat-kit").projectDir = File("../chatuikit-android/ease-im-kit")
+project(":ease-chat-kit").projectDir = File("../easemob-uikit-android/ease-im-kit")
 ```
 
-2. 在 `build.gradle.kts` 文件（/Gradle Scripts/build.gradle(Module: app)）中添加如下代码：
+2. 在 `build.gradle.kts` 文件 app/build.gradle(Module: app)中添加如下代码：
 
 ```kotlin
 //chatuikit-android
@@ -153,7 +153,7 @@ implementation(project(mapOf("path" to ":ease-chat-kit")))
 ## UIKit 基本项目结构
 
 ```
-└── easeui
+└── uikit
     ├── ChatUIKitClient                                   // UIKit SDK 入口
     ├── ChatUIKitConfig                             // UIKit SDK 配置类
     ├── feature                                  // UIKit 功能模块
@@ -342,8 +342,8 @@ UIKitChatFragment 提供了 Builder 构建方式，方便开发者进行一些�
 
 ```kotlin
 // conversationID: 1v1 is peer's userID, group chat is groupID
-// easeChatType: SINGLE_CHAT, GROUP_CHAT, CHATROOM
-UIKitChatFragment.Builder(conversationID, easeChatType)
+// chatType: SINGLE_CHAT, GROUP_CHAT, CHATROOM
+UIKitChatFragment.Builder(conversationID, chatType)
         .useTitleBar(true)
         .setTitleBarTitle("title")
         .setTitleBarSubTitle("subtitle")
@@ -419,14 +419,14 @@ UIKitChatFragment.Builder(conversationID, easeChatType)
 | setThreadMessage()                     | 设置当前会话是否是子区会话。<br/> - true：是。 <br/> - (默认) false: 否。                      |
 | setTargetTranslationList()             | 设置翻译目标语言列表。需要开通消息翻译功能。                       |
 | setEmptyLayout()                       | 设置聊天列表的空白页面。                                     |
-| setCustomAdapter()                     | 设置自定义的适配器，默认为 EaseMessageAdapter。               |
+| setCustomAdapter()                     | 设置自定义的适配器，默认为 ChatUIKitMessagesAdapter。               |
 | setCustomFragment()                    | 设置自定义聊天 Fragment，需要继承自 UIKitChatFragment。         |
 
 #### 添加自定义消息布局
 
-开发者可以继承 EaseMessageAdapter ， ChatUIKitRowViewHolder 和 ChatUIKitRow 实现自己的 CustomMessageAdapter ，CustomChatTypeViewViewHolder 和 CustomTypeChatRow ，然后将 CustomMessageAdapter 设置到 UIKitChatFragment#Builder#setCustomAdapter 中。
+开发者可以继承 ChatUIKitMessagesAdapter ， ChatUIKitRowViewHolder 和 ChatUIKitRow 实现自己的 CustomMessageAdapter ，CustomChatTypeViewViewHolder 和 CustomTypeChatRow ，然后将 CustomMessageAdapter 设置到 UIKitChatFragment#Builder#setCustomAdapter 中。
 
-（1）创建自定义适配器 CustomMessageAdapter 继承自 EaseMessageAdapter，重写 getViewHolder 和 getItemNotEmptyViewType 方法。
+（1）创建自定义适配器 CustomMessageAdapter 继承自 ChatUIKitMessagesAdapter，重写 getViewHolder 和 getItemNotEmptyViewType 方法。
 
 ```kotlin
 class CustomMessageAdapter: ChatUIKitMessagesAdapter() {
@@ -437,7 +437,7 @@ class CustomMessageAdapter: ChatUIKitMessagesAdapter() {
         return CUSTOM_YOUR_MESSAGE_TYPE
     }
 
-    override fun getViewHolder(parent: ViewGroup, viewType: Int): ViewHolder<EaseMessage> {
+    override fun getViewHolder(parent: ViewGroup, viewType: Int): ViewHolder<ChatMessage> {
         // 根据返回的 viewType 返回对应的 ViewHolder。
         // 返回自定义的 ViewHolder 或者 使用默认的 super.getViewHolder(parent, viewType)
         return CUSTOM_VIEW_HOLDER()
@@ -476,7 +476,7 @@ class CustomChatTypeViewViewHolder(
     itemView: View
 ): ChatUIKitRowViewHolder(itemView) {
 
-    override fun onBubbleClick(message: EaseMessage?) {
+    override fun onBubbleClick(message: ChatMessage?) {
         super.onBubbleClick(message)
         // Add click event
     }
@@ -505,7 +505,7 @@ class CustomMessageAdapter: ChatUIKitMessagesAdapter() {
         return super.getItemNotEmptyViewType(position)
     }
 
-    override fun getViewHolder(parent: ViewGroup, viewType: Int): ViewHolder<EaseMessage> {
+    override fun getViewHolder(parent: ViewGroup, viewType: Int): ViewHolder<ChatMessage> {
         // 根据返回的 viewType 返回对应的 ViewHolder。
         if (viewType == VIEW_TYPE_MESSAGE_CUSTOM_VIEW_ME || viewType == VIEW_TYPE_MESSAGE_CUSTOM_VIEW_OTHER) {
             CustomChatTypeViewViewHolder(
