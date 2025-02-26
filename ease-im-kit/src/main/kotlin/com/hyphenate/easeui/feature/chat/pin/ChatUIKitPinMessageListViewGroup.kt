@@ -100,7 +100,7 @@ class ChatUIKitPinMessageListViewGroup @JvmOverloads constructor(
 
     }
 
-    private fun setData(data: MutableList<ChatMessage>?) {
+    fun setData(data: MutableList<ChatMessage>?) {
         data?.let {
             pinAdapter?.setData(it)
             updatePinCount()
@@ -117,11 +117,6 @@ class ChatUIKitPinMessageListViewGroup @JvmOverloads constructor(
 
     fun setPinViewStatusChangeListener(listener:OnPinViewStatusChangListener?){
         viewStatusChangeListener = listener
-    }
-
-    fun show(messages: MutableList<ChatMessage>?) {
-        visibility = VISIBLE
-        setData(messages)
     }
 
     fun removeData(message: ChatMessage?) {
