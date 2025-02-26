@@ -2,6 +2,7 @@
 <resources>
 
     <string-array name="report_reason">
+        <item>疑似诈骗信息</item>
         <item>不受欢迎的商业内容或垃圾信息</item>
         <item>色情或露骨的内容</item>
         <item>儿童虐待</item>

@@ -101,13 +101,13 @@ def copy_and_remove_directory(src_dir, dest_dir):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python change_package_name.py <project_path>")
+    if len(sys.argv) != 4:
+        print("Usage: python change_package_name.py <project_path> <old_package> <new_package>")
         sys.exit(1)
     
     project_path = sys.argv[1]
-    old_package = "com.hyphenate.easeui"
-    new_package = "io.agora.chat.uikit"
+    old_package = sys.argv[2]
+    new_package = sys.argv[3]
     
     start_time = time.time()
 
