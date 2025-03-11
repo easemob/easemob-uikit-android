@@ -71,8 +71,10 @@ dependencies {
     implementation("io.github.scwang90:refresh-layout-kernel:2.1.0")
     implementation("io.github.scwang90:refresh-header-material:2.1.0")
     // Chat SDK
-    api("io.hyphenate:hyphenate-chat:4.12.0")
+    api("io.hyphenate:hyphenate-chat:4.13.0")
 //    implementation(project(mapOf("path" to ":hyphenatechatsdk")))
 }
 
-//apply {from("../maven-push-release.gradle")}
+//apply {from("../script/maven-push-release.gradle")}
+//apply {from("../script/maven-push-shengwang-release.gradle")}
+//apply {from("../script/maven-push-agora-release.gradle")}

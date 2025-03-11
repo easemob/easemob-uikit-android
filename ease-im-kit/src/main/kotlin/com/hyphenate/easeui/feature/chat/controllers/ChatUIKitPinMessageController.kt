@@ -58,7 +58,7 @@ class ChatUIKitPinMessageController(
 
     fun showPinInfoView(){
         pinMessageListView?.visibility = View.VISIBLE
-        pinMessageListView?.show(pinMessages)
+        pinMessageListView?.setData(pinMessages)
     }
 
     fun hidePinInfoView(){
@@ -110,9 +110,9 @@ class ChatUIKitPinMessageController(
 
     fun updatePinMessage(message:ChatMessage?,operationUser:String?){
         CoroutineScope(Dispatchers.Main).launch {
-            val isPined: Boolean = message?.pinnedInfo() == null || message.pinnedInfo().operatorId().isEmpty()
-            ChatLog.d("updatePinMessage",if (isPined) "unpin success" else "pin success")
-            if (isPined) {
+            val pinInfoNotExist: Boolean = message?.pinnedInfo() == null || message.pinnedInfo().operatorId().isEmpty()
+            ChatLog.d("updatePinMessage",if (pinInfoNotExist) "unpin success" else "pin success")
+            if (pinInfoNotExist) {
                 removeData(message)
             } else {
                 addData(message)
@@ -142,7 +142,7 @@ class ChatUIKitPinMessageController(
             }
             val list = sortedByMapValue()
             pinMessages.addAll(0,list)
-            pinMessageListView?.show(pinMessages)
+            pinMessageListView?.setData(pinMessages)
         }
     }
 
@@ -157,7 +157,7 @@ class ChatUIKitPinMessageController(
             pinMessageMap[message.msgId] = it
             val list = sortedByMapValue()
             pinMessages.addAll(0,list)
-            pinMessageListView?.show(pinMessages)
+            pinMessageListView?.setData(pinMessages)
         }
     }
 
