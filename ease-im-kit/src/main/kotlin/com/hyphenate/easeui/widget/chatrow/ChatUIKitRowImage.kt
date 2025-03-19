@@ -22,6 +22,8 @@ import com.hyphenate.easeui.common.extensions.isSuccess
 import com.hyphenate.easeui.common.extensions.loadImageFromMessage
 import com.hyphenate.easeui.common.extensions.mainScope
 import com.hyphenate.easeui.common.utils.ChatUIKitFileUtils
+import com.hyphenate.easeui.feature.chat.UIKitChatFragment.Companion.retryTimes
+import com.hyphenate.util.EMLog
 import kotlinx.coroutines.launch
 
 /**
@@ -34,7 +36,6 @@ open class ChatUIKitRowImage @JvmOverloads constructor(
     isSender: Boolean = false
 ) : ChatUIKitRowFile(context, attrs, defStyleAttr, isSender) {
     protected val imageView: ImageView? by lazy { findViewById(R.id.image) }
-    private var retryTimes = 3
 
     override fun onInflateView() {
         inflater.inflate(
@@ -51,7 +52,6 @@ open class ChatUIKitRowImage @JvmOverloads constructor(
                 if (isSuccess() && it.thumbnailDownloadStatus() == ChatDownloadStatus.DOWNLOADING) {
                     setMessageDownloadCallback(true)
                 }
-                retryTimes = 3
                 if (ChatUIKitFileUtils.isFileExistByUri(context, it.localUri)
                     || ChatUIKitFileUtils.isFileExistByUri(context, it.thumbnailLocalUri())) {
                     showImageView(this, position)
@@ -125,9 +125,11 @@ open class ChatUIKitRowImage @JvmOverloads constructor(
     }
 
     private val isInRetrying: Boolean
-        private get() {
-            val times = retryTimes
-            retryTimes--
+        get() {
+            val msgId = message?.msgId ?: return false
+            val times = retryTimes.getOrPut(msgId) { 3 }
+            retryTimes[msgId] = times - 1
+            EMLog.d("ChatUIKitRowImage", "isInRetrying: $times")
             return times > 0
         }
 
