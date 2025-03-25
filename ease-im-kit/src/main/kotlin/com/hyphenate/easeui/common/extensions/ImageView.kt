@@ -66,6 +66,9 @@ internal fun ImageView.loadImageFromLocalOrUrl(localUri: Uri?
     load(localUri ?: remoteUrl) {
         error(placeholder)
         fallback(placeholder)
+        drawable?.let{
+            placeholder(it)
+        }
         diskCachePolicy(CachePolicy.ENABLED)
         if (showSize?.isEmpty() == false) {
             size(showSize.width, showSize.height)
