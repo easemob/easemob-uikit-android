@@ -1,6 +1,11 @@
 package com.hyphenate.easeui.common.impl
 
 import android.content.Context
+import android.os.Build.VERSION.SDK_INT
+import coil.Coil
+import coil.ImageLoader
+import coil.decode.GifDecoder
+import coil.decode.ImageDecoderDecoder
 import com.hyphenate.easeui.ChatUIKitConfig
 import com.hyphenate.easeui.common.ChatClient
 import com.hyphenate.easeui.common.ChatConnectionListener
@@ -56,6 +61,19 @@ internal class ChatUIKitClientImpl: IChatUIKitClient {
             return
         }
         this.context = context.applicationContext
+
+        val gifEnabledLoader = ImageLoader.Builder(context)
+            .components {
+                if ( SDK_INT >= 28 ) {
+                    add(ImageDecoderDecoder.Factory())
+                } else {
+                    add(GifDecoder.Factory())
+                }
+            }.build()
+
+        //设置全局唯一实例
+        Coil.setImageLoader(gifEnabledLoader)
+
         var chatOptions: ChatOptions? = null
         if (options == null) {
             chatOptions = ChatOptions().apply {
