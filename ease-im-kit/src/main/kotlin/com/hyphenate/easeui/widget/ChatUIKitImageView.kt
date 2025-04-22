@@ -106,6 +106,19 @@ class ChatUIKitImageView : AppCompatImageView {
 
     // rectangle or round, 1 is circle, 2 is rectangle
     private var shapeType = 0
+    
+    // Add a new paint for drawing border
+    private val borderPaint = Paint().apply {
+        isAntiAlias = true
+        style = Paint.Style.STROKE
+    }
+    
+    // Add a rounded rectangle path for clipping
+    private val roundRectPath = android.graphics.Path()
+    private val roundRectRectF = RectF()
+    
+    // Flag to track if GIF is being displayed
+    private var isDisplayingGif = false
 
     constructor(context: Context) : super(context) {
         init(context, null)
@@ -154,136 +167,128 @@ class ChatUIKitImageView : AppCompatImageView {
         pressPaint!!.color = pressColor
         pressPaint!!.alpha = 0
         pressPaint!!.flags = Paint.ANTI_ALIAS_FLAG
-        isDrawingCacheEnabled = true
-        setWillNotDraw(false)
+        
+        // Configure border paint
+        borderPaint.color = borderColor
+        borderPaint.strokeWidth = borderWidth.toFloat()
+        
+        // We need hardware acceleration for better GIF rendering
+        setLayerType(LAYER_TYPE_HARDWARE, null)
+    }
+    
+    // Override setImageDrawable to detect GIFs
+    override fun setImageDrawable(drawable: Drawable?) {
+        isDisplayingGif = drawable != null && 
+                drawable.javaClass.name.contains("Gif", ignoreCase = true)
+        super.setImageDrawable(drawable)
     }
 
     override fun onDraw(canvas: Canvas) {
-        if (shapeType == 0) {
+        if (shapeType == 0 || drawable == null) {
             super.onDraw(canvas)
             return
         }
-        val drawable = drawable ?: return
-        // the width and height is in xml file
-        if (getWidth() == 0 || getHeight() == 0) {
-            return
-        }
-        val bitmap = getBitmapFromDrawable(drawable)
-        drawDrawable(canvas, bitmap)
+        
+        // Save the canvas state
+        canvas.save()
+        
+        // Apply the shape mask
+        applyShapeMask(canvas)
+        
+        // Draw the image content
+        super.onDraw(canvas)
+        
+        // Restore to draw border and press effects outside the clipping
+        canvas.restore()
+        
         if (isClickable) {
             drawPress(canvas)
         }
+        
         drawBorder(canvas)
     }
-
+    
     /**
-     * draw Rounded Rectangle
-     *
-     * @param canvas
-     * @param bitmap
+     * Apply the shape mask to the canvas based on shapeType
      */
-    private fun drawDrawable(canvas: Canvas, bitmap: Bitmap?) {
-        var bitmap = bitmap
-        val paint = Paint()
-        paint.color = -0x1
-        paint.isAntiAlias = true //smooths out the edges of what is being drawn
-        val xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_IN)
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            // set flags
-            val saveFlags = (CanvasLegacy.MATRIX_SAVE_FLAG
-                    or CanvasLegacy.CLIP_SAVE_FLAG
-                    or CanvasLegacy.HAS_ALPHA_LAYER_SAVE_FLAG
-                    or CanvasLegacy.FULL_COLOR_LAYER_SAVE_FLAG
-                    or CanvasLegacy.CLIP_TO_LAYER_SAVE_FLAG)
-            CanvasLegacy.saveLayer(
-                canvas,
-                0f,
-                0f,
-                width.toFloat(),
-                height.toFloat(),
-                null,
-                saveFlags
-            )
-        } else {
-            canvas.saveLayer(0f, 0f, width.toFloat(), height.toFloat(), null)
-        }
+    private fun applyShapeMask(canvas: Canvas) {
         if (shapeType == 1) {
-            canvas.drawCircle(
-                (width / 2).toFloat(),
-                (height / 2).toFloat(),
-                (width / 2 - 1).toFloat(),
-                paint
-            )
+            // Circle shape
+            val centerX = width / 2f
+            val centerY = height / 2f
+            val radius = Math.min(width, height) / 2f - borderWidth / 2f
+            
+            // Create a circular clip path
+            val path = android.graphics.Path()
+            path.addCircle(centerX, centerY, radius, android.graphics.Path.Direction.CW)
+            canvas.clipPath(path)
         } else if (shapeType == 2) {
-            val rectf = RectF(1f, 1f, (getWidth() - 1).toFloat(), (getHeight() - 1).toFloat())
-            canvas.drawRoundRect(rectf, (radius + 1).toFloat(), (radius + 1).toFloat(), paint)
+            // Rounded rectangle
+            roundRectRectF.set(
+                borderWidth / 2f,
+                borderWidth / 2f,
+                width - borderWidth / 2f,
+                height - borderWidth / 2f
+            )
+            
+            // Create a rounded rectangle clip path
+            roundRectPath.reset()
+            roundRectPath.addRoundRect(
+                roundRectRectF,
+                radius.toFloat(),
+                radius.toFloat(),
+                android.graphics.Path.Direction.CW
+            )
+            canvas.clipPath(roundRectPath)
         }
-        paint.xfermode = xfermode
-        val scaleWidth = getWidth().toFloat() / bitmap!!.width
-        val scaleHeight = getHeight().toFloat() / bitmap.height
-        val matrix = Matrix()
-        matrix.postScale(scaleWidth, scaleHeight)
-
-        //bitmap scale
-        bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
-        canvas.drawBitmap(bitmap, 0f, 0f, paint)
-        canvas.restore()
     }
 
     /**
      * draw the effect when pressed
-     *
-     * @param canvas
      */
     private fun drawPress(canvas: Canvas) {
-        // check is rectangle or circle
-        if (shapeType == 1) {
-            canvas.drawCircle(
-                (width / 2).toFloat(),
-                (height / 2).toFloat(),
-                (width / 2 - 1).toFloat(),
-                pressPaint!!
-            )
-        } else if (shapeType == 2) {
-            val rectF = RectF(1f, 1f, (width - 1).toFloat(), (height - 1).toFloat())
-            canvas.drawRoundRect(
-                rectF,
-                (radius + 1).toFloat(),
-                (radius + 1).toFloat(),
-                pressPaint!!
-            )
+        pressPaint?.let { paint ->
+            if (shapeType == 1) {
+                canvas.drawCircle(
+                    width / 2f,
+                    height / 2f,
+                    Math.min(width, height) / 2f - borderWidth / 2f,
+                    paint
+                )
+            } else if (shapeType == 2) {
+                val rectF = RectF(
+                    borderWidth / 2f,
+                    borderWidth / 2f,
+                    width - borderWidth / 2f,
+                    height - borderWidth / 2f
+                )
+                canvas.drawRoundRect(rectF, radius.toFloat(), radius.toFloat(), paint)
+            }
         }
     }
 
     /**
      * draw customized border
-     *
-     * @param canvas
      */
     private fun drawBorder(canvas: Canvas) {
         if (borderWidth > 0) {
-            val paint = Paint()
-            paint.strokeWidth = borderWidth.toFloat()
-            paint.style = Paint.Style.STROKE
-            paint.color = borderColor
-            paint.isAntiAlias = true
-            // // check is rectangle or circle
+            borderPaint.color = borderColor
+            
             if (shapeType == 1) {
-                canvas.drawCircle(
-                    (width / 2).toFloat(),
-                    (height / 2).toFloat(),
-                    ((width - borderWidth) / 2).toFloat() - 1f,
-                    paint
-                )
+                // Circle border
+                val centerX = width / 2f
+                val centerY = height / 2f
+                val radius = Math.min(width, height) / 2f - borderWidth / 2f
+                canvas.drawCircle(centerX, centerY, radius, borderPaint)
             } else if (shapeType == 2) {
-                val rectf = RectF(
-                    (borderWidth / 2).toFloat(),
-                    (borderWidth / 2).toFloat(),
-                    (getWidth() - borderWidth / 2).toFloat(),
-                    (
-                            getHeight() - borderWidth / 2).toFloat()
+                // Rounded rectangle border
+                val rectF = RectF(
+                    borderWidth / 2f,
+                    borderWidth / 2f,
+                    width - borderWidth / 2f,
+                    height - borderWidth / 2f
                 )
-                canvas.drawRoundRect(rectf, radius.toFloat(), radius.toFloat(), paint)
+                canvas.drawRoundRect(rectF, radius.toFloat(), radius.toFloat(), borderPaint)
             }
         }
     }
@@ -330,36 +335,7 @@ class ChatUIKitImageView : AppCompatImageView {
     }
 
     /**
-     *
-     * @param drawable
-     * @return
-     */
-    private fun getBitmapFromDrawable(drawable: Drawable?): Bitmap? {
-        if (drawable == null) {
-            return null
-        }
-        if (drawable is BitmapDrawable) {
-            return drawable.bitmap
-        }
-        var bitmap: Bitmap?
-        val width = Math.max(drawable.intrinsicWidth, 2)
-        val height = Math.max(drawable.intrinsicHeight, 2)
-        try {
-            bitmap = Bitmap.createBitmap(width, height, BITMAP_CONFIG)
-            val canvas = Canvas(bitmap)
-            drawable.setBounds(0, 0, canvas.width, canvas.height)
-            drawable.draw(canvas)
-        } catch (e: IllegalArgumentException) {
-            e.printStackTrace()
-            bitmap = null
-        }
-        return bitmap
-    }
-
-    /**
      * set border color
-     *
-     * @param borderColor
      */
     fun setBorderColor(borderColor: Int) {
         this.borderColor = borderColor
@@ -368,11 +344,10 @@ class ChatUIKitImageView : AppCompatImageView {
 
     /**
      * set border width
-     *
-     * @param borderWidth
      */
     fun setBorderWidth(borderWidth: Int) {
         this.borderWidth = borderWidth
+        invalidate()
     }
 
     /**

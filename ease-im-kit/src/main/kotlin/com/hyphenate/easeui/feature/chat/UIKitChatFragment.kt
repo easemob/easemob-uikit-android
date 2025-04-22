@@ -1432,6 +1432,8 @@ open class UIKitChatFragment: ChatUIKitBaseFragment<UikitFragmentChatBinding>(),
         const val REQUEST_CODE_DING_MSG = 4
         const val REQUEST_CODE_SELECT_VIDEO = 11
         const val REQUEST_CODE_SELECT_FILE = 12
+        //download attachment retry times
+        var retryTimes= hashMapOf<String?,Int>()
     }
 
 }

@@ -66,12 +66,13 @@ dependencies {
     // RecyclerView
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     // Coil: load image library
-    implementation("io.coil-kt:coil:2.5.0")
+    implementation("io.coil-kt:coil:2.6.0")
+    implementation("io.coil-kt:coil-gif:2.6.0")
     // Refresh layout
     implementation("io.github.scwang90:refresh-layout-kernel:2.1.0")
     implementation("io.github.scwang90:refresh-header-material:2.1.0")
     // Chat SDK
-    api("io.hyphenate:hyphenate-chat:4.13.0")
+    api("io.hyphenate:hyphenate-chat:4.14.0")
 //    implementation(project(mapOf("path" to ":hyphenatechatsdk")))
 }
 
