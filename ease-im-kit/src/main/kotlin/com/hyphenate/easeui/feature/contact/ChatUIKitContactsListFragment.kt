@@ -115,11 +115,12 @@ open class ChatUIKitContactsListFragment: ChatUIKitBaseFragment<FragmentContactL
                 if (getBoolean(Constant.KEY_SHOW_ITEM_HEADER, false)) {
                     if (headerList.isNullOrEmpty()) headerList = ChatUIKitHeaderItemConfig(mContext).getDefaultHeaderItemModels()
                     if (headerAdapter == null) {
-                        headerAdapter = ChatUIKitCustomHeaderAdapter()
+                        headerAdapter = ChatUIKitCustomHeaderAdapter().apply {
+                            setHasStableIds(true)
+                            listContact.addHeaderAdapter(this)
+                        }
                     }
                     headerAdapter?.let {
-                        it.setHasStableIds(true)
-                        listContact.addHeaderAdapter(it)
                         if (headerList?.isNotEmpty() == true){
                             updateRequestCount()
                         }
