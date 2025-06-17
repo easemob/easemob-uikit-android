@@ -78,9 +78,9 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
-    implementation("io.github.scwang90:refresh-layout-kernel:2.1.0")
-    implementation("io.github.scwang90:refresh-header-material:2.1.0")
-    implementation("io.github.scwang90:refresh-header-classics:2.1.0")
+    implementation("io.github.scwang90:refresh-layout-kernel:3.0.0-alpha")
+    implementation("io.github.scwang90:refresh-header-material:3.0.0-alpha")
+    implementation("io.github.scwang90:refresh-header-classics:3.0.0-alpha")
     implementation("pub.devrel:easypermissions:3.0.0")
     // Coil: load image library
     implementation("io.coil-kt:coil:2.5.0")
