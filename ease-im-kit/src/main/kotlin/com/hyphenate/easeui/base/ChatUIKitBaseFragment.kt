@@ -12,8 +12,10 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.viewbinding.ViewBinding
 import com.hyphenate.easeui.R
+import com.hyphenate.util.EMLog
 
 abstract class ChatUIKitBaseFragment<B : ViewBinding> : Fragment() {
+    private val TAG = "ChatUIKitBaseFragment"
     var binding: B? = null
     lateinit var mContext: Activity
     private var loadingDialog: AlertDialog? = null
@@ -39,23 +41,52 @@ abstract class ChatUIKitBaseFragment<B : ViewBinding> : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         binding = getViewBinding(inflater, container)
+        EMLog.d(TAG, "onCreateView: " + this)
         return this.binding?.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        EMLog.d(TAG, "onViewCreated: " + this)
         initView(savedInstanceState)
         initViewModel()
         initListener()
         initData()
     }
 
+    override fun onStart() {
+        super.onStart()
+        EMLog.d(TAG, "onStart: " + this)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        EMLog.d(TAG, "onResume: " + this)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        EMLog.d(TAG, "onPause: " + this)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        EMLog.d(TAG, "onStop: " + this)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        EMLog.d(TAG, "onDestroy: " + this)
+        dismissLoading()
+    }
+
+
     /**
      * Initialize the views
      * @param savedInstanceState
      */
     protected open fun initView(savedInstanceState: Bundle?) {
-        Log.d("TAG", "fragment = " + this.javaClass.simpleName)
+        Log.d(TAG, "initView " + this)
     }
 
     /**
@@ -75,6 +106,7 @@ abstract class ChatUIKitBaseFragment<B : ViewBinding> : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        EMLog.d(TAG, "onDestroyView: " + this.javaClass.simpleName)
         binding = null
     }
 
