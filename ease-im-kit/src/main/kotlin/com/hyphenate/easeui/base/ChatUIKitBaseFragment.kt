@@ -86,7 +86,7 @@ abstract class ChatUIKitBaseFragment<B : ViewBinding> : Fragment() {
      * @param savedInstanceState
      */
     protected open fun initView(savedInstanceState: Bundle?) {
-        Log.d(TAG, "initView " + this)
+        EMLog.d(TAG, "initView " + this)
     }
 
     /**
