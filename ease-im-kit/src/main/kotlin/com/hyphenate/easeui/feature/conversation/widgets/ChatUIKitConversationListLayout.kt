@@ -3,6 +3,7 @@ package com.hyphenate.easeui.feature.conversation.widgets
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.util.AttributeSet
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
@@ -23,16 +24,16 @@ import com.hyphenate.easeui.common.impl.OnItemClickListenerImpl
 import com.hyphenate.easeui.common.impl.OnItemLongClickListenerImpl
 import com.hyphenate.easeui.common.impl.OnMenuItemClickListenerImpl
 import com.hyphenate.easeui.databinding.UikitConversationListBinding
-import com.hyphenate.easeui.feature.conversation.interfaces.OnLoadConversationListener
 import com.hyphenate.easeui.feature.conversation.adapter.ChatUIKitConversationListAdapter
 import com.hyphenate.easeui.feature.conversation.config.ChatUIKitConvItemConfig
 import com.hyphenate.easeui.feature.conversation.interfaces.IConvItemStyle
+import com.hyphenate.easeui.feature.conversation.interfaces.IConvMenu
 import com.hyphenate.easeui.feature.conversation.interfaces.IConversationListLayout
 import com.hyphenate.easeui.feature.conversation.interfaces.IUIKitConvListResultView
 import com.hyphenate.easeui.feature.conversation.interfaces.OnConversationListChangeListener
+import com.hyphenate.easeui.feature.conversation.interfaces.OnLoadConversationListener
 import com.hyphenate.easeui.feature.conversation.interfaces.UnreadDotPosition
 import com.hyphenate.easeui.feature.conversation.interfaces.UnreadStyle
-import com.hyphenate.easeui.feature.conversation.interfaces.IConvMenu
 import com.hyphenate.easeui.interfaces.ChatUIKitMessageListener
 import com.hyphenate.easeui.interfaces.OnItemClickListener
 import com.hyphenate.easeui.interfaces.OnItemLongClickListener
@@ -47,6 +48,8 @@ import com.hyphenate.easeui.model.chatConversation
 import com.hyphenate.easeui.viewmodel.conversations.ChatUIKitConversationListViewModel
 import com.hyphenate.easeui.viewmodel.conversations.IConversationListRequest
 import com.hyphenate.easeui.widget.ChatUIKitImageView
+import kotlinx.coroutines.launch
+
 
 class ChatUIKitConversationListLayout @JvmOverloads constructor(
     private val context: Context,
@@ -177,22 +180,25 @@ class ChatUIKitConversationListLayout @JvmOverloads constructor(
                 }
             }
         })
+        setAdapterListener(listAdapter)
 
-        listAdapter?.setOnItemClickListener(OnItemClickListenerImpl {
-            view, position ->
+        ChatUIKitClient.addChatMessageListener(chatMessageListener)
+    }
+
+    private fun setAdapterListener(adapter: ChatUIKitConversationListAdapter?) {
+        adapter?.setOnItemClickListener(OnItemClickListenerImpl {
+                view, position ->
             itemClickListener?.onItemClick(view, position)
         })
 
-        listAdapter?.setOnItemLongClickListener(OnItemLongClickListenerImpl {
-            view, position ->
+        adapter?.setOnItemLongClickListener(OnItemLongClickListenerImpl {
+                view, position ->
             if (itemLongClickListener != null && itemLongClickListener?.onItemLongClick(view, position) == true) {
                 return@OnItemLongClickListenerImpl true
             }
             showDefaultMenu(view, position)
             return@OnItemLongClickListenerImpl true
         })
-
-        ChatUIKitClient.addChatMessageListener(chatMessageListener)
     }
 
     override fun onDetachedFromWindow() {
@@ -326,9 +332,6 @@ class ChatUIKitConversationListLayout @JvmOverloads constructor(
         listAdapter?.setConversationItemConfig(itemConfig)
     }
 
-    override fun setItemBackGround(backGround: Drawable?) {
-        
-    }
 
     override fun setItemHeight(height: Int) {
         itemConfig.itemHeight = height.toFloat()
@@ -418,7 +421,13 @@ class ChatUIKitConversationListLayout @JvmOverloads constructor(
                 }
             } ?: concatAdapter.addAdapter(adapter)
             listAdapter = this
+            //自定义adapter需要自己配置itemConfig
+            itemConfig = adapter.config
+            setAdapterListener(listAdapter)
             listAdapter!!.setConversationItemConfig(itemConfig)
+            lifecycleScope.launch {
+                listAdapter?.notifyDataSetChanged()
+            }
         }
     }
 
