@@ -54,7 +54,15 @@ object RequestMsgHelper {
         if (TextUtils.isEmpty(messageStatus)) {
             return ""
         }
-        val status = InviteMessageStatus.valueOf(messageStatus) ?: return ""
+        val status = messageStatus.let {
+            try {
+                InviteMessageStatus.valueOf(it)
+            }catch (e: Exception){
+                ChatLog.e("RequestMsgHelper", "getSystemMessage: "+ e.message)
+                null
+            }
+        } ?: return ""
+
         val message: String
         val builder = StringBuilder(context.getString(status.msgContent))
         message = when (status) {
