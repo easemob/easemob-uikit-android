@@ -1,8 +1,10 @@
 package com.hyphenate.easeui.feature.invitation.helper
 
+import android.R.id.message
 import android.content.Context
 import android.text.TextUtils
 import com.hyphenate.easeui.common.ChatException
+import com.hyphenate.easeui.common.ChatLog
 import com.hyphenate.easeui.common.ChatMessage
 import com.hyphenate.easeui.common.ChatUIKitConstant
 import com.hyphenate.easeui.feature.invitation.enums.InviteMessageStatus
@@ -20,7 +22,14 @@ object RequestMsgHelper {
         if (TextUtils.isEmpty(messageStatus)) {
             return ""
         }
-        val status = messageStatus?.let { InviteMessageStatus.valueOf(it) } ?: return ""
+        val status = messageStatus?.let {
+            try {
+                InviteMessageStatus.valueOf(it)
+            }catch (e: Exception){
+                ChatLog.e("RequestMsgHelper", "getSystemMessage: "+ e.message)
+                null
+            }
+        } ?: return ""
         val messge: String
         val builder = StringBuilder(context.getString(status.msgContent))
         messge = when (status) {
