@@ -4,7 +4,7 @@ import android.graphics.drawable.Drawable
 import com.hyphenate.easeui.common.interfaces.IAvatarStyle
 
 interface IConvItemStyle : IAvatarStyle, IConvItemTextStyle {
-    fun setItemBackGround(backGround: Drawable?)
+//    fun setItemBackGround(backGround: Drawable?)
     fun setItemHeight(height: Int)
 
     /**

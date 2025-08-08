@@ -13,7 +13,7 @@ import com.hyphenate.easeui.model.ChatUIKitConversation
  * @param config Conversation item config.
  */
 open class ChatUIKitConversationListAdapter(
-    private var config: ChatUIKitConvItemConfig = ChatUIKitConvItemConfig()
+    var config: ChatUIKitConvItemConfig = ChatUIKitConvItemConfig()
 ): ChatUIKitBaseRecyclerViewAdapter<ChatUIKitConversation>() {
 
     override fun getItemNotEmptyViewType(position: Int): Int {

@@ -132,6 +132,9 @@ open class ChatUIKitConversationListFragment: ChatUIKitBaseFragment<FragmentConv
                     }
                 }
                 searchBar.visibility = if (getBoolean(Constant.KEY_USE_SEARCH, false)) View.VISIBLE else View.GONE
+                adapter?.let {
+                    listConversation.setListAdapter(it)
+                }
                 listConversation.showUnreadDotPosition(UnreadDotPosition.valueOf(getString(Constant.KEY_UNREAD_POSITION, UnreadDotPosition.RIGHT.name)))
                 listConversation.setUnreadStyle(UnreadStyle.valueOf(getString(Constant.KEY_UNREAD_STYLE, UnreadStyle.NUM.name)))
                 getInt(Constant.KEY_EMPTY_LAYOUT, -1).takeIf { it != -1 }?.let {
