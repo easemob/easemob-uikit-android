@@ -49,7 +49,7 @@ open class ChatUIKitConversationListFragment: ChatUIKitBaseFragment<FragmentConv
 
     private var menuItemClickListener: OnMenuItemClickListener? = null
     private var itemLongClickListener: OnItemLongClickListener? = null
-    private var adapter: ChatUIKitConversationListAdapter? = null
+    protected var adapter: ChatUIKitConversationListAdapter? = null
     private var itemClickListener: OnItemDataClickListener? = null
     private var conversationListChangeListener: OnConversationListChangeListener? = null
     private var backPressListener: View.OnClickListener? = null

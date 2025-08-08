@@ -44,17 +44,17 @@ import kotlinx.coroutines.launch
 
 open class ChatUIKitContactsListFragment: ChatUIKitBaseFragment<FragmentContactListLayoutBinding>(),
     OnItemLongClickListener, OnContactEventListener{
-    private var adapter: ChatUIKitContactListAdapter? = null
-    private var headerAdapter:ChatUIKitCustomHeaderAdapter?=null
+    protected var adapter: ChatUIKitContactListAdapter? = null
+    protected var headerAdapter:ChatUIKitCustomHeaderAdapter?=null
     private var headerItemClickListener: OnHeaderItemClickListener? = null
     private var userListItemClickListener: OnUserListItemClickListener? = null
     private var itemLongClickListener: OnItemLongClickListener? = null
     private var contactSelectedListener:OnContactSelectedListener?=null
     private var backPressListener: View.OnClickListener? = null
-    private var viewType: ChatUIKitListViewType? = ChatUIKitListViewType.LIST_CONTACT
-    private var headerList:List<ChatUIKitCustomHeaderItem>? = null
-    private var searchType: ChatUIKitSearchType? = null
-    private var selectedMembers:MutableList<String> = mutableListOf()
+    protected var viewType: ChatUIKitListViewType? = ChatUIKitListViewType.LIST_CONTACT
+    protected var headerList:List<ChatUIKitCustomHeaderItem>? = null
+    protected var searchType: ChatUIKitSearchType? = null
+    protected var selectedMembers:MutableList<String> = mutableListOf()
     private val contactViewModel by lazy { ViewModelProvider(this)[ChatUIKitContactListViewModel::class.java] }
     val dialogController by lazy { ChatUIKitConvDialogController(mContext, this) }
 
@@ -339,7 +339,7 @@ open class ChatUIKitContactsListFragment: ChatUIKitBaseFragment<FragmentContactL
         this.viewType = viewType
     }
 
-    private fun setHeaderAdapter(headerAdapter:ChatUIKitCustomHeaderAdapter?){
+    private fun setCustomHeaderAdapter(headerAdapter:ChatUIKitCustomHeaderAdapter?){
         this.headerAdapter = headerAdapter
     }
 
@@ -596,7 +596,7 @@ open class ChatUIKitContactsListFragment: ChatUIKitBaseFragment<FragmentContactL
             fragment.setCustomAdapter(adapter)
             fragment.setOnBackPressListener(backPressListener)
             fragment.setListViewType(viewType)
-            fragment.setHeaderAdapter(headerAdapter)
+            fragment.setCustomHeaderAdapter(headerAdapter)
             fragment.setOnHeaderItemClickListener(headerItemClickListener)
             fragment.setOnUserListItemClickListener(userListItemClickListener)
             fragment.setOnItemLongClickListener(itemLongClickListener)
