@@ -351,13 +351,18 @@ internal class ChatListenersWrapper : ChatConnectionListener, ChatMessageListene
     override fun onMessageRecalledWithExt(recallMessageInfo: MutableList<ChatRecallMessageInfo>?) {
         if (recallMessageInfo != null && recallMessageInfo.size > 0) {
             for (message in recallMessageInfo) {
-                val receiveMessage = ChatMessage.createReceiveMessage(ChatMessageType.TXT).apply {
-                    msgId =message.recallMessageId // 使用被撤回消息的 ID
-                    from = message.recallBy // 撤回者 ID
-                    chatType = message.recallMessage?.chatType // 聊天类型（单聊/群聊等）
+                message.recallMessage?.let {
+                    if (it.isGroupChat() && ChatUIKitAtMessageHelper.get().isAtMeMsg(it)) {
+                        ChatUIKitAtMessageHelper.get().removeAtMeGroup(it.conversationId())
+                    }
+                    val receiveMessage = ChatMessage.createReceiveMessage(ChatMessageType.TXT).apply {
+                        msgId =message.recallMessageId // 使用被撤回消息的 ID
+                        from = message.recallBy // 撤回者 ID
+                        chatType = message.recallMessage?.chatType // 聊天类型（单聊/群聊等）
+                    }
+                    val recallMsg = receiveMessage.createUnsentMessage(true)
+                    ChatClient.getInstance().chatManager().getConversation(message.conversationId).insertMessage(recallMsg)
                 }
-                val recallMsg = receiveMessage.createUnsentMessage(true)
-                ChatClient.getInstance().chatManager().getConversation(message.conversationId).insertMessage(recallMsg)
             }
         }
         chatMessageListener.let {
