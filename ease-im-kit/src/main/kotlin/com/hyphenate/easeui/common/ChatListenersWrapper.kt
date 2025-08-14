@@ -355,14 +355,14 @@ internal class ChatListenersWrapper : ChatConnectionListener, ChatMessageListene
                     if (it.isGroupChat() && ChatUIKitAtMessageHelper.get().isAtMeMsg(it)) {
                         ChatUIKitAtMessageHelper.get().removeAtMeGroup(it.conversationId())
                     }
-                    val receiveMessage = ChatMessage.createReceiveMessage(ChatMessageType.TXT).apply {
+                }
+                val receiveMessage = ChatMessage.createReceiveMessage(ChatMessageType.TXT).apply {
                         msgId =message.recallMessageId // 使用被撤回消息的 ID
                         from = message.recallBy // 撤回者 ID
                         chatType = message.recallMessage?.chatType // 聊天类型（单聊/群聊等）
                     }
                     val recallMsg = receiveMessage.createUnsentMessage(true)
                     ChatClient.getInstance().chatManager().getConversation(message.conversationId).insertMessage(recallMsg)
-                }
             }
         }
         chatMessageListener.let {
