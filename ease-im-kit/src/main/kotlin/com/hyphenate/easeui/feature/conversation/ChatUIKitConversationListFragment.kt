@@ -49,7 +49,7 @@ open class ChatUIKitConversationListFragment: ChatUIKitBaseFragment<FragmentConv
 
     private var menuItemClickListener: OnMenuItemClickListener? = null
     private var itemLongClickListener: OnItemLongClickListener? = null
-    private var adapter: ChatUIKitConversationListAdapter? = null
+    protected var adapter: ChatUIKitConversationListAdapter? = null
     private var itemClickListener: OnItemDataClickListener? = null
     private var conversationListChangeListener: OnConversationListChangeListener? = null
     private var backPressListener: View.OnClickListener? = null
@@ -132,6 +132,9 @@ open class ChatUIKitConversationListFragment: ChatUIKitBaseFragment<FragmentConv
                     }
                 }
                 searchBar.visibility = if (getBoolean(Constant.KEY_USE_SEARCH, false)) View.VISIBLE else View.GONE
+                adapter?.let {
+                    listConversation.setListAdapter(it)
+                }
                 listConversation.showUnreadDotPosition(UnreadDotPosition.valueOf(getString(Constant.KEY_UNREAD_POSITION, UnreadDotPosition.RIGHT.name)))
                 listConversation.setUnreadStyle(UnreadStyle.valueOf(getString(Constant.KEY_UNREAD_STYLE, UnreadStyle.NUM.name)))
                 getInt(Constant.KEY_EMPTY_LAYOUT, -1).takeIf { it != -1 }?.let {
