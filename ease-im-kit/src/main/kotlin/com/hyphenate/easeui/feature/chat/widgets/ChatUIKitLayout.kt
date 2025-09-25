@@ -1,5 +1,6 @@
 package com.hyphenate.easeui.feature.chat.widgets
 
+import android.app.ProgressDialog.show
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -39,6 +40,7 @@ import com.hyphenate.easeui.common.ChatThread
 import com.hyphenate.easeui.common.ChatType
 import com.hyphenate.easeui.common.bus.ChatUIKitFlowBus
 import com.hyphenate.easeui.common.enums.ChatUIKitFinishReason
+import com.hyphenate.easeui.common.extensions.hideSoftKeyboard
 import com.hyphenate.easeui.common.extensions.isSuccess
 import com.hyphenate.easeui.common.extensions.lifecycleScope
 import com.hyphenate.easeui.common.extensions.mainScope
@@ -273,6 +275,8 @@ class ChatUIKitLayout @JvmOverloads constructor(
      * listener for multiple select view remove message listener
      */
     private var multipleSelectRemoveMsgListener: OnMultipleSelectRemoveMsgListener? = null
+
+    private var voiceRecorderDialog:ChatUIKitVoiceRecorderDialog?=null
 
     private val chatMessageListener = object : ChatUIKitMessageListener() {
         override fun onMessageReceived(messages: MutableList<ChatMessage>?) {
@@ -565,7 +569,7 @@ class ChatUIKitLayout @JvmOverloads constructor(
             }
 
             override fun onToggleVoiceBtnClicked() {
-                ChatUIKitVoiceRecorderDialog(mContext, conversationId).apply {
+                voiceRecorderDialog=ChatUIKitVoiceRecorderDialog(mContext, conversationId).apply {
                     if (mContext is AppCompatActivity) {
                         show(mContext.supportFragmentManager, "ease_chat_voice_recorder_dialog")
                         setOnVoiceRecorderClickListener(object : OnVoiceRecorderClickListener {
@@ -1362,6 +1366,12 @@ class ChatUIKitLayout @JvmOverloads constructor(
 
     private fun isChatroomConv(): Boolean {
         return chatType?.getConversationType() == ChatConversationType.ChatRoom
+    }
+
+    fun stopRecorder(){
+        if (voiceRecorderDialog?.recordStatus == ChatUIKitVoiceRecorderDialog.RecordStatus.RECORDING){
+            voiceRecorderDialog?.toStopRecordStatus()
+        }
     }
 
     companion object {

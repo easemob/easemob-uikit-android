@@ -48,6 +48,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_goneMarginBottom="@dimen/ease_size_7"
+                android:layout_marginEnd="@dimen/ease_size_12"
                 tools:text="H" />
 
             <TextView
