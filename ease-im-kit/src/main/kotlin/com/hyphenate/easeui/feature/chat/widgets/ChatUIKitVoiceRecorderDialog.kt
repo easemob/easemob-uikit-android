@@ -28,7 +28,8 @@ class ChatUIKitVoiceRecorderDialog(
     private var recordTouchListener: OnChatRecordTouchListener? = null
     private var dismissListener: OnDismissListener? = null
     private var listener: OnVoiceRecorderClickListener? = null
-    private var recordStatus = RecordStatus.RECORD_IDLE
+    var recordStatus = RecordStatus.RECORD_IDLE
+        private set
     private val micImageHandler by lazy {
         val handlerThread = HandlerThread("mic-change")
         handlerThread.start()
@@ -155,7 +156,7 @@ class ChatUIKitVoiceRecorderDialog(
         timer.startTimer()
     }
 
-    private fun toStopRecordStatus() {
+    fun toStopRecordStatus() {
         setRecordStopStatus()
         stopRecord()
         timer.stopTimer()
@@ -367,7 +368,7 @@ class ChatUIKitVoiceRecorderDialog(
         this.dismissListener = listener
     }
 
-    private enum class RecordStatus {
+    enum class RecordStatus {
         /**
          * Recorder is idle.
          */
