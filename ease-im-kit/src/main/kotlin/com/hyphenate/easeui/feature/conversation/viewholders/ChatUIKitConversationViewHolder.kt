@@ -1,5 +1,7 @@
 package com.hyphenate.easeui.feature.conversation.viewholders
 
+import android.R.attr.name
+import android.R.id.message
 import android.graphics.drawable.Drawable
 import android.view.View
 import androidx.viewbinding.ViewBinding
@@ -7,6 +9,7 @@ import coil.load
 import com.hyphenate.easeui.ChatUIKitClient
 import com.hyphenate.easeui.R
 import com.hyphenate.easeui.base.ChatUIKitBaseRecyclerViewAdapter
+import com.hyphenate.easeui.common.ChatLog
 import com.hyphenate.easeui.common.ChatMessageDirection
 import com.hyphenate.easeui.common.ChatMessageStatus
 import com.hyphenate.easeui.common.ChatType
@@ -39,16 +42,10 @@ class ChatUIKitConversationViewHolder(
     private var bgDrawable: Drawable? = null
 
     init {
-        config?.bindView(viewBinding)
-    }
-
-    override fun initView(viewBinding: ViewBinding?) {
-        super.initView(viewBinding)
-        viewBinding?.let {
-            if (it is UikitItemConversationListBinding) {
-                ChatUIKitClient.getConfig()?.avatarConfig?.setAvatarStyle(it.avatar)
-                bgDrawable = it.root.background
-            }
+        viewBinding.let {
+            config?.bindView(it)
+            ChatUIKitClient.getConfig()?.avatarConfig?.setAvatarStyle(it.avatar)
+            bgDrawable = config?.itemBackground?:it.root.background
         }
     }
 
