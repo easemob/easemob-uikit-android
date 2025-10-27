@@ -332,6 +332,10 @@ class ChatUIKitConversationListLayout @JvmOverloads constructor(
         listAdapter?.setConversationItemConfig(itemConfig)
     }
 
+    override fun setItemBackGround(backGround: Drawable?) {
+        itemConfig.itemBackground = backGround
+        notifyDataSetChanged()
+    }
 
     override fun setItemHeight(height: Int) {
         itemConfig.itemHeight = height.toFloat()
