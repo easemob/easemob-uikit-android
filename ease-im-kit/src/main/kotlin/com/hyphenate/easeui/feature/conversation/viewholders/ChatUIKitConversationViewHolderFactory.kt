@@ -13,20 +13,20 @@ object ChatUIKitConversationViewHolderFactory {
         inflater: LayoutInflater,
         parent: ViewGroup?,
         viewType: ChatUIKitConvViewType = ChatUIKitConvViewType.VIEW_TYPE_CONVERSATION,
-        style: ChatUIKitConvItemConfig = ChatUIKitConvItemConfig()
+        config: ChatUIKitConvItemConfig = ChatUIKitConvItemConfig()
     ): ChatUIKitBaseRecyclerViewAdapter.ViewHolder<ChatUIKitConversation> {
         return when(viewType) {
             ChatUIKitConvViewType.VIEW_TYPE_CONVERSATION -> {
                 ChatUIKitConversationViewHolder(
                     UikitItemConversationListBinding.inflate(inflater, parent, false),
-                    style
+                    config
                 )
             }
             else -> {
                 // Return default view holder
                 ChatUIKitConversationViewHolder(
                     UikitItemConversationListBinding.inflate(inflater, parent, false),
-                    style
+                    config
                 )
             }
         }

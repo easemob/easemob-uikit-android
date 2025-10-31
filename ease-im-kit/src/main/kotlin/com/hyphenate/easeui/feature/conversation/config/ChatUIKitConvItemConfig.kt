@@ -1,6 +1,8 @@
 package com.hyphenate.easeui.feature.conversation.config
 
 import android.content.Context
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import androidx.core.content.ContextCompat
 import com.hyphenate.easeui.ChatUIKitClient
@@ -9,6 +11,7 @@ import com.hyphenate.easeui.configs.ChatUIKitAvatarConfig
 import com.hyphenate.easeui.feature.conversation.interfaces.UnreadDotPosition
 import com.hyphenate.easeui.feature.conversation.interfaces.UnreadStyle
 import com.hyphenate.easeui.widget.ChatUIKitImageView
+import androidx.core.graphics.drawable.toDrawable
 
 /**
  * Conversation item configuration
@@ -41,6 +44,7 @@ data class ChatUIKitConvItemConfig(
     var avatarSize: Int = -1,
     var avatarConfig: ChatUIKitAvatarConfig = ChatUIKitClient.getConfig()?.avatarConfig?.copy() ?: ChatUIKitAvatarConfig(),
     var itemHeight: Float = -1f,
+    var itemBackground: Drawable? = null
 ) {
     internal companion object {
 
@@ -118,6 +122,17 @@ data class ChatUIKitConvItemConfig(
                 }
                 a.getDimension(R.styleable.ChatUIKitConversationListLayout_ease_con_item_height, -1f).let {
                     if (it != -1f) itemConfig.itemHeight = it
+                }
+                a.getResourceId(R.styleable.ChatUIKitConversationListLayout_ease_con_item_background, -1).let { resId ->
+                    if (resId != -1) {
+                        itemConfig.itemBackground = ContextCompat.getDrawable(context, resId)
+                    } else {
+                        a.getColor(R.styleable.ChatUIKitConversationListLayout_ease_con_item_background, -1).let { color ->
+                            if (color != -1) {
+                                itemConfig.itemBackground = color.toDrawable()
+                            }
+                        }
+                    }
                 }
                 a.recycle()
             }
