@@ -19,6 +19,7 @@ import com.hyphenate.easeui.widget.chatrow.EaseChatRowVoice
 import com.hyphenate.easeui.widget.chatrow.EaseChatRowAlert
 import com.hyphenate.easeui.widget.chatrow.EaseChatRowThreadNotify
 import com.hyphenate.easeui.widget.chatrow.EaseChatRowCombine
+import com.hyphenate.easeui.widget.chatrow.EaseChatRowStream
 
 object EaseChatViewHolderFactory {
     fun createViewHolder(
@@ -106,6 +107,13 @@ object EaseChatViewHolderFactory {
                 )
             )
 
+            EaseMessageViewType.VIEW_TYPE_MESSAGE_STREAM_ME, EaseMessageViewType.VIEW_TYPE_MESSAGE_STREAM_OTHER -> EaseStreamViewHolder(
+                EaseChatRowStream(
+                    parent.context,
+                    isSender = viewType == EaseMessageViewType.VIEW_TYPE_MESSAGE_STREAM_ME
+                )
+            )
+
             else -> EaseUnknownViewHolder(EaseChatRowUnknown(parent.context, isSender = false))
         }
     }
@@ -118,6 +126,18 @@ object EaseChatViewHolderFactory {
         val type: EaseMessageViewType
         val messageType = message.type
         val direct = message.direct()
+        
+        // 优先检查是否是流式消息
+        val streamChunk = message.getStreamChunk()
+        if (streamChunk != null && streamChunk is EMStreamTextChunk) {
+            // 是流式文本消息
+            return if (direct == ChatMessageDirection.SEND) {
+                EaseMessageViewType.VIEW_TYPE_MESSAGE_STREAM_ME
+            } else {
+                EaseMessageViewType.VIEW_TYPE_MESSAGE_STREAM_OTHER
+            }
+        }
+        
         type = if (messageType == ChatMessageType.TXT) {
             val isThreadNotify: Boolean =
                 message.getBooleanAttribute(EaseConstant.THREAD_NOTIFICATION_TYPE, false)

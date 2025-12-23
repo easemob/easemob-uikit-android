@@ -70,6 +70,8 @@ dependencies {
     // Refresh layout
     implementation("io.github.scwang90:refresh-layout-kernel:2.1.0")
     implementation("io.github.scwang90:refresh-header-material:2.1.0")
+    // Markwon: Markdown rendering library
+    implementation("io.noties.markwon:core:4.6.2")
     // Chat SDK
     api("io.hyphenate:hyphenate-chat:4.10.0")
 //    implementation(project(mapOf("path" to ":hyphenatechatsdk")))
