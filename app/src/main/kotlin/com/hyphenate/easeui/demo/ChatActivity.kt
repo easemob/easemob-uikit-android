@@ -29,5 +29,6 @@ class ChatActivity: UIKitChatActivity() {
                 mContext.showToast(R.string.message_forward_fail)
             }
         })
+        builder.setCustomFragment(ChatFragment())
     }
 }
