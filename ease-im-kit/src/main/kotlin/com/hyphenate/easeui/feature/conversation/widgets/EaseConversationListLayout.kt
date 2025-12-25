@@ -12,6 +12,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.hyphenate.chat.EMMessage
 import com.hyphenate.easeui.EaseIM
 import com.hyphenate.easeui.R
 import com.hyphenate.easeui.common.ChatMessage
@@ -116,6 +117,10 @@ class EaseConversationListLayout @JvmOverloads constructor(
 
     private val chatMessageListener = object : EaseMessageListener() {
         override fun onMessageReceived(messages: MutableList<ChatMessage>?) {
+            listViewModel?.loadData()
+        }
+
+        override fun onStreamMessageReceived(messages: MutableList<EMMessage>?) {
             listViewModel?.loadData()
         }
 

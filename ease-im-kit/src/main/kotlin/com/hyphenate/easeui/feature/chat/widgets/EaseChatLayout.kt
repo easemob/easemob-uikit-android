@@ -18,6 +18,7 @@ import android.widget.EditText
 import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
+import com.hyphenate.chat.EMMessage
 import com.hyphenate.easeui.EaseIM
 import com.hyphenate.easeui.R
 import com.hyphenate.easeui.common.ChatClient
@@ -95,6 +96,7 @@ import com.hyphenate.easeui.model.EaseProfile
 import com.hyphenate.easeui.model.EaseUser
 import com.hyphenate.easeui.viewmodel.messages.EaseChatViewModel
 import com.hyphenate.easeui.viewmodel.messages.IChatViewRequest
+import com.hyphenate.util.EMLog
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 
@@ -305,6 +307,29 @@ class EaseChatLayout @JvmOverloads constructor(
                     //getChatMessageListLayout().setSendOrReceiveMessage(messages[0])
                     chatBinding.layoutChatMessage.refreshToLatest()
                 }
+            }
+        }
+
+        override fun onStreamMessageReceived(messages: MutableList<EMMessage>?) {
+            super.onStreamMessageReceived(messages)
+
+            EMLog.e("stream", "onStreamMessageReceived: "+messages?.size)
+            val refreshList = mutableListOf<EMMessage>();
+            if (messages != null) {
+                for (msg in messages) {
+                    EMLog.e("stream", "onStreamMessageReceived: id"+msg.msgId + " isStream: "+(msg.streamChunk != null))
+                    if (msg.streamChunk != null) {
+                        if (msg.streamChunk.status == EMMessage.EMStreamStatus.START) {
+                            chatNotificationController.updateNotificationView()
+                            chatBinding.layoutChatMessage.refreshToLatest()
+                        } else {
+                            refreshList.add(msg);
+                        }
+                    }
+                }
+            }
+            if (refreshList.size > 0) {
+                refreshMessages(refreshList)
             }
         }
 

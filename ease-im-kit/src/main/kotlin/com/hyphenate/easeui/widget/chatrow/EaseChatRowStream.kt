@@ -2,7 +2,9 @@ package com.hyphenate.easeui.widget.chatrow
 
 import android.content.Context
 import android.util.AttributeSet
+import com.hyphenate.chat.EMTextMessageBody
 import com.hyphenate.easeui.R
+import com.hyphenate.util.EMLog
 import io.noties.markwon.Markwon
 
 /**
@@ -27,14 +29,15 @@ open class EaseChatRowStream @JvmOverloads constructor(
     override fun onSetUpView() {
         message?.run {
             val streamChunk = getStreamChunk()
-            if (streamChunk is com.hyphenate.chat.EMStreamTextChunk) {
+            if (streamChunk != null) {
                 // Get text content from stream chunk
-                val textContent = streamChunk.text
-                val textType = streamChunk.textType
+                val textContent = (body as EMTextMessageBody).message
+                val textType = streamChunk.customType
                 
                 contentView?.let { view ->
                     // Check if it's markdown format
                     if (textType == "markdown" && !textContent.isNullOrEmpty()) {
+                        EMLog.e("stream", "display stream message: content: "+textContent)
                         // Render markdown using Markwon
                         markwon?.setMarkdown(view, textContent)
                     } else {
@@ -55,9 +58,6 @@ open class EaseChatRowStream @JvmOverloads constructor(
                 // because Markwon handles markdown rendering, and these methods are
                 // designed for plain text with URL spans and @ mentions.
                 // If needed, we can add similar functionality for markdown content later.
-            } else {
-                // Fallback: if not a stream text chunk, use parent's implementation
-                super.onSetUpView()
             }
         }
     }

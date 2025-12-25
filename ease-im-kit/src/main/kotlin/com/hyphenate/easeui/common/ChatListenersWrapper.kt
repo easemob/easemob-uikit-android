@@ -6,6 +6,7 @@ import com.hyphenate.EMMultiDeviceListener.GROUP_CREATE
 import com.hyphenate.EMMultiDeviceListener.GROUP_DESTROY
 import com.hyphenate.EMMultiDeviceListener.GROUP_JOIN
 import com.hyphenate.EMMultiDeviceListener.GROUP_LEAVE
+import com.hyphenate.chat.EMMessage
 import com.hyphenate.easeui.EaseIM
 import com.hyphenate.easeui.common.bus.EaseFlowBus
 import com.hyphenate.easeui.common.extensions.createUnsentMessage
@@ -265,6 +266,18 @@ internal class ChatListenersWrapper : ChatConnectionListener, ChatMessageListene
             for (messageListener in it) {
                 try {
                     messageListener.onMessageReceived(messages)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
+    override fun onStreamMessageReceived(messages: MutableList<EMMessage>?) {
+        chatMessageListener.let {
+            for (messageListener in it) {
+                try {
+                    messageListener.onStreamMessageReceived(messages)
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }

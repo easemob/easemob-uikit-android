@@ -1,5 +1,6 @@
 package com.hyphenate.easeui.interfaces
 
+import com.hyphenate.chat.EMMessage
 import com.hyphenate.easeui.common.ChatGroupReadAck
 import com.hyphenate.easeui.common.ChatMessage
 import com.hyphenate.easeui.common.ChatMessageListener
@@ -11,6 +12,10 @@ import com.hyphenate.easeui.common.ChatRecallMessageInfo
 open class EaseMessageListener: ChatMessageListener {
 
     override fun onMessageReceived(messages: MutableList<ChatMessage>?) {}
+
+    override fun onStreamMessageReceived(messages: MutableList<EMMessage>?) {
+
+    }
 
     override fun onCmdMessageReceived(messages: MutableList<ChatMessage>?) {}
 

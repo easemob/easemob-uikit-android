@@ -20,6 +20,7 @@ import com.hyphenate.easeui.widget.chatrow.EaseChatRowAlert
 import com.hyphenate.easeui.widget.chatrow.EaseChatRowThreadNotify
 import com.hyphenate.easeui.widget.chatrow.EaseChatRowCombine
 import com.hyphenate.easeui.widget.chatrow.EaseChatRowStream
+import com.hyphenate.util.EMLog
 
 object EaseChatViewHolderFactory {
     fun createViewHolder(
@@ -129,7 +130,8 @@ object EaseChatViewHolderFactory {
         
         // 优先检查是否是流式消息
         val streamChunk = message.getStreamChunk()
-        if (streamChunk != null && streamChunk is EMStreamTextChunk) {
+        if (streamChunk != null) {
+            EMLog.e("STREAM", "This is a stream message, id: "+message.msgId)
             // 是流式文本消息
             return if (direct == ChatMessageDirection.SEND) {
                 EaseMessageViewType.VIEW_TYPE_MESSAGE_STREAM_ME
