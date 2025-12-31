@@ -71,9 +71,15 @@ dependencies {
     // Refresh layout
     implementation("io.github.scwang90:refresh-layout-kernel:3.0.0-alpha")
     implementation("io.github.scwang90:refresh-header-material:3.0.0-alpha")
+    //markwon
+    implementation("io.noties.markwon:core:4.6.2")
+    implementation("io.noties.markwon:image-glide:4.6.2")
+    implementation("io.noties.markwon:ext-latex:4.6.2")
+    implementation("io.noties.markwon:ext-tables:4.6.2")
+    implementation("io.noties.markwon:inline-parser:4.6.2")
     // Chat SDK
-    api("io.hyphenate:hyphenate-chat:4.18.0")
-//    implementation(project(mapOf("path" to ":hyphenatechatsdk")))
+//    api("io.hyphenate:hyphenate-chat:4.18.0")
+    implementation(project(mapOf("path" to ":hyphenatechatsdk")))
 }
 
 //apply {from("../script/maven-push-release.gradle")}

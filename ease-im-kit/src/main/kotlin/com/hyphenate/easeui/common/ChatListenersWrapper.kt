@@ -91,6 +91,28 @@ internal class ChatListenersWrapper : ChatConnectionListener, ChatMessageListene
         chatMessageListener.remove(listener)
     }
 
+    /**
+     * Streaming message callback (Markdown chunks).
+     *
+     * NOTE: Hyphenate SDK will call this on registered [ChatMessageListener]s.
+     * We must forward it to all UI listeners; otherwise UI never receives chunks.
+     */
+    override fun onStreamMessageReceived(messages: List<ChatMessage>?) {
+        ChatLog.d(
+            "ChatListenersWrapper",
+            "onStreamMessageReceived: size=${messages?.size ?: 0}, forwardTo=${chatMessageListener.size}"
+        )
+        chatMessageListener.let {
+            for (messageListener in it) {
+                try {
+                    messageListener.onStreamMessageReceived(messages)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
     fun addGroupChangeListener(listener:ChatGroupChangeListener){
         if (chatGroupChangeListener.contains(listener)) return
         chatGroupChangeListener.add(listener)

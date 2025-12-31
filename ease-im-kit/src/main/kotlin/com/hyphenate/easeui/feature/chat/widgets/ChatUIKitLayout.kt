@@ -18,8 +18,10 @@ import android.view.MotionEvent
 import android.view.View
 import android.widget.EditText
 import android.widget.FrameLayout
+import androidx.recyclerview.widget.ConcatAdapter
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
+import com.hyphenate.chat.EMMessage
 import com.hyphenate.easeui.ChatUIKitClient
 import com.hyphenate.easeui.R
 import com.hyphenate.easeui.common.ChatClient
@@ -40,6 +42,7 @@ import com.hyphenate.easeui.common.ChatThread
 import com.hyphenate.easeui.common.ChatType
 import com.hyphenate.easeui.common.bus.ChatUIKitFlowBus
 import com.hyphenate.easeui.common.enums.ChatUIKitFinishReason
+import com.hyphenate.easeui.common.extensions.getItemCountBeforeTarget
 import com.hyphenate.easeui.common.extensions.hideSoftKeyboard
 import com.hyphenate.easeui.common.extensions.isSuccess
 import com.hyphenate.easeui.common.extensions.lifecycleScope
@@ -79,6 +82,7 @@ import com.hyphenate.easeui.feature.chat.interfaces.OnRecallMessageResultListene
 import com.hyphenate.easeui.feature.chat.interfaces.OnReportMessageListener
 import com.hyphenate.easeui.feature.chat.interfaces.OnTranslationMessageListener
 import com.hyphenate.easeui.feature.chat.reply.interfaces.OnMessageReplyViewClickListener
+import com.hyphenate.easeui.feature.chat.viewholders.ChatUIKitRowViewHolder
 import com.hyphenate.easeui.feature.thread.ChatUIKitCreateThreadActivity
 import com.hyphenate.easeui.feature.thread.interfaces.OnMessageChatThreadClickListener
 import com.hyphenate.easeui.interfaces.UIKitChatRoomListener
@@ -98,6 +102,8 @@ import com.hyphenate.easeui.model.ChatUIKitProfile
 import com.hyphenate.easeui.model.ChatUIKitUser
 import com.hyphenate.easeui.viewmodel.messages.ChatUIKitViewModel
 import com.hyphenate.easeui.viewmodel.messages.IChatViewRequest
+import com.hyphenate.easeui.widget.StreamMarkdownChunkStore
+import com.hyphenate.easeui.widget.chatrow.ChatUIKitRowTextMarkDown
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 
@@ -277,6 +283,8 @@ class ChatUIKitLayout @JvmOverloads constructor(
     private var multipleSelectRemoveMsgListener: OnMultipleSelectRemoveMsgListener? = null
 
     private var voiceRecorderDialog:ChatUIKitVoiceRecorderDialog?=null
+    // 用于避免“第一片 chunk 找不到 item”时频繁触发刷新
+    private val streamRefreshRequested: HashSet<String> = HashSet()
 
     private val chatMessageListener = object : ChatUIKitMessageListener() {
         override fun onMessageReceived(messages: MutableList<ChatMessage>?) {
@@ -333,6 +341,74 @@ class ChatUIKitLayout @JvmOverloads constructor(
                                 it.sendEmptyMessageDelayed(MSG_OTHER_TYPING_END, OTHER_TYPING_SHOW_TIME.toLong())
                             }
                         }
+                    }
+                }
+            }
+        }
+
+        override fun onStreamMessageReceived(messages: List<EMMessage>?) {
+            if (messages.isNullOrEmpty()) return
+            // 可能来自非主线程：切到 UI 线程做 RecyclerView 定位与渲染
+            post {
+                val rv = chatBinding.layoutChatMessage.messageListLayout
+                val msgAdapter = chatBinding.layoutChatMessage.getMessagesAdapter()
+                if (rv == null || msgAdapter == null) {
+                    ChatLog.w(TAG, "onStreamMessageReceived: rv or adapter is null")
+                    return@post
+                }
+                val concat = rv.adapter as? ConcatAdapter
+                val offset = if (concat != null) concat.getItemCountBeforeTarget(msgAdapter) else 0
+
+                messages.forEach { msg ->
+                    val chunkText = msg.streamChunk?.text
+                    if (chunkText.isNullOrEmpty()) return@forEach
+
+                    val msgId = msg.msgId
+                    val cid = conversationId
+
+                    // 只处理当前会话
+                    if (!cid.isNullOrEmpty()) {
+                        val username: String? =
+                            if (msg.chatType === ChatType.GroupChat || msg.chatType === ChatType.ChatRoom) {
+                                msg.to
+                            } else {
+                                msg.from
+                            }
+                        if (!(username == cid || msg.to == cid || msg.conversationId() == cid)) {
+                            return@forEach
+                        }
+                    }
+
+                    val index = msgAdapter.data?.indexOfLast { it.msgId == msgId } ?: -1
+                    if (index < 0) {
+                        // 找不到 item：视为“第一片数据先到”，先缓存，等 bind 时再让 Row 启动打字机
+                        StreamMarkdownChunkStore.append(msgId, chunkText)
+                        ChatLog.d(TAG, "onStreamMessageReceived: buffer chunk (item not found), msgId=$msgId, len=${chunkText.length}")
+
+                        if (!streamRefreshRequested.contains(msgId)) {
+                            streamRefreshRequested.add(msgId)
+                            // 不强制滚到底：用户如果正在翻历史消息，不打断
+                            if (chatBinding.layoutChatMessage.isCanAutoScrollToBottom) {
+                                chatBinding.layoutChatMessage.refreshToLatest()
+                            } else {
+                                chatBinding.layoutChatMessage.refreshMessages()
+                            }
+                        }
+                        return@forEach
+                    }
+
+                    val holder = rv.findViewHolderForAdapterPosition(offset + index)
+                    val row = (holder as? ChatUIKitRowViewHolder)?.getChatRow()
+                    val mdRow = row as? ChatUIKitRowTextMarkDown
+                    if (mdRow != null) {
+                        ChatLog.d(TAG, "onStreamMessageReceived: deliver chunk to row, msgId=$msgId, len=${chunkText.length}")
+                        mdRow.appendData(chunkText)
+                    } else {
+                        // item 存在但当前不可见/holder 不匹配：不强制打字机，避免用户滚回时从中间开始打
+                        ChatLog.d(
+                            TAG,
+                            "onStreamMessageReceived: item exists but row not visible/markdown, msgId=$msgId, holder=${holder?.javaClass?.simpleName}"
+                        )
                     }
                 }
             }
