@@ -3,6 +3,7 @@ package com.hyphenate.easeui.widget.chatrow
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.Spanned
@@ -39,6 +40,9 @@ import io.noties.markwon.inlineparser.MarkwonInlineParserPlugin
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import java.util.Locale
+import android.view.ViewParent
+import androidx.recyclerview.widget.RecyclerView
+import com.hyphenate.easeui.feature.chat.widgets.ChatUIKitMessageListLayout
 
 
 open class ChatUIKitRowTextMarkDown @JvmOverloads constructor(
@@ -52,10 +56,13 @@ open class ChatUIKitRowTextMarkDown @JvmOverloads constructor(
     private var markwon: Markwon? = null
     private var typewriter: StreamingMarkdownTypewriter? = null
     private var boundMsgId: String? = null
+    private var stickToBottom: Boolean = false
+    private var lastAutoScrollUptimeMs: Long = 0L
     private val TAG = "ChatUIKitRowTextMarkDown"
 
     companion object{
         const val AT_PREFIX = "@"
+        private const val AUTO_SCROLL_THROTTLE_MS = 60L
     }
 
     override fun onInflateView() {
@@ -113,7 +120,11 @@ open class ChatUIKitRowTextMarkDown @JvmOverloads constructor(
 
         if (typewriter == null) {
             val mw = getMarkwon(view)
-            typewriter = StreamingMarkdownTypewriter(mainHandler, mw, view).also { it.reset() }
+            // 只有当“开始流式打字机”的那一刻用户位于底部，才开启“粘住底部”滚动
+            stickToBottom = (findRecyclerView(view)?.canScrollVertically(1) == false)
+            typewriter = StreamingMarkdownTypewriter(mainHandler, mw, view) { _, _ ->
+                maybeAutoScrollToBottom(view)
+            }.also { it.reset() }
             ChatLog.d(TAG, "appendData: init typewriter, msgId=$msgId")
         }
 
@@ -276,6 +287,7 @@ open class ChatUIKitRowTextMarkDown @JvmOverloads constructor(
         // RecyclerView item 回收时释放资源，避免 Handler 持有 View 导致泄漏
         typewriter?.destroy()
         typewriter = null
+        stickToBottom = false
     }
 
     private fun getMarkwon(view: TextView): Markwon {
@@ -306,4 +318,65 @@ open class ChatUIKitRowTextMarkDown @JvmOverloads constructor(
             view.text = text
         }
     }
+
+    private fun maybeAutoScrollToBottom(anchorView: View) {
+        val rv = findRecyclerView(anchorView) ?: return
+
+        // 如果用户手动滚回到底部，可以恢复“粘底”
+        if (!stickToBottom && rv.scrollState == RecyclerView.SCROLL_STATE_IDLE && !rv.canScrollVertically(1)) {
+            stickToBottom = true
+            ChatLog.d(TAG, "autoScroll: resume stickToBottom=true")
+        }
+
+        if (!stickToBottom) return
+        // 用户正在拖动/惯性滚动时不抢手势
+        if (rv.scrollState != RecyclerView.SCROLL_STATE_IDLE) {
+            stickToBottom = false
+            ChatLog.d(TAG, "autoScroll: stop stickToBottom=false (scrollState=${rv.scrollState})")
+            return
+        }
+        // 如果上层 MessageListLayout 判定不允许自动滚到底（例如用户已上滑离开底部），立刻停止
+        val listLayout = findMessageListLayout(anchorView)
+        if (listLayout != null && !listLayout.isCanAutoScrollToBottom) {
+            stickToBottom = false
+            ChatLog.d(TAG, "autoScroll: stop stickToBottom=false (listLayout disallow)")
+            return
+        }
+        val now = SystemClock.uptimeMillis()
+        if (now - lastAutoScrollUptimeMs < AUTO_SCROLL_THROTTLE_MS) return
+        lastAutoScrollUptimeMs = now
+
+        // 关键：不要用 scrollToPosition(last)（会把最后一个 item 放到屏幕顶部，造成“总是看见顶部 + 闪烁”）
+        // 我们只做“向下补齐 delta”，让底部保持贴住（更稳定，不跳动）
+        if (!rv.canScrollVertically(1)) return
+        val childCount = rv.childCount
+        if (childCount <= 0) return
+        val lastChild = rv.getChildAt(childCount - 1) ?: return
+        val dy = lastChild.bottom - rv.height
+        if (dy > 0) {
+            rv.scrollBy(0, dy)
+            if (dy > 20) {
+                ChatLog.d(TAG, "autoScroll: scrollBy dy=$dy")
+            }
+        }
+    }
+
+    private fun findRecyclerView(view: View): RecyclerView? {
+        var p: ViewParent? = view.parent
+        while (p != null) {
+            if (p is RecyclerView) return p
+            p = p.parent
+        }
+        return null
+    }
+
+    private fun findMessageListLayout(view: View): ChatUIKitMessageListLayout? {
+        var p: ViewParent? = view.parent
+        while (p != null) {
+            if (p is ChatUIKitMessageListLayout) return p
+            p = p.parent
+        }
+        return null
+    }
+
 }

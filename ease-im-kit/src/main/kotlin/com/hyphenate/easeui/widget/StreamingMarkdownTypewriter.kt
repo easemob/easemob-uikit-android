@@ -22,7 +22,9 @@ import kotlin.math.min
 class StreamingMarkdownTypewriter(
     private val mainHandler: Handler,
     markwon: Markwon,
-    markdownView: TextView
+    markdownView: TextView,
+    // 打字机每次推进后回调（可用于外部做“跟随滚动到底部”等 UI 联动），默认不做任何事
+    private val onTextUpdated: ((typedIndex: Int, total: Int) -> Unit)? = null
 ) {
     private val markwon: Markwon
     private val markdownView: TextView
@@ -167,6 +169,7 @@ class StreamingMarkdownTypewriter(
                 typedIndex = min(typedIndex + 1, total)
                 val visible = renderedMarkdown!!.subSequence(0, typedIndex)
                 markdownView.setText(visible)
+                onTextUpdated?.invoke(typedIndex, total)
 
                 // When we update TextView manually (typewriter), Markwon plugins will not get
                 // beforeSetText/afterSetText callbacks, so we must schedule ourselves.

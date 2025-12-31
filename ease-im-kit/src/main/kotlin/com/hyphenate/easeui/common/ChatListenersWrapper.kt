@@ -131,8 +131,12 @@ internal class ChatListenersWrapper : ChatConnectionListener, ChatMessageListene
                         if (now - last >= STREAM_CONV_UPDATE_THROTTLE_MS) {
                             streamConvUpdateTs[cid] = now
                             ChatUIKitFlowBus.with<ChatUIKitEvent>(ChatUIKitEvent.EVENT.UPDATE.name)
-                                .post(scope, ChatUIKitEvent(ChatUIKitEvent.EVENT.UPDATE.name, ChatUIKitEvent.TYPE.CONVERSATION, cid))
-                            ChatLog.d("ChatListenersWrapper", "post conversation UPDATE for stream: cid=$cid")
+                                // 重要：这里不要把 message 填成 conversationId。
+                                // UIKitChatFragment 监听 EVENT.UPDATE + TYPE.CONVERSATION 且 message == conversationId 时，会触发 refreshMessages()，
+                                // 对流式场景来说会导致列表频繁 reload，进而引起“闪烁/打字机被重置/跳动”。
+                                // 会话列表刷新不依赖 message 字段，所以置空即可。
+                                .post(scope, ChatUIKitEvent(ChatUIKitEvent.EVENT.UPDATE.name, ChatUIKitEvent.TYPE.CONVERSATION, null))
+                            ChatLog.d("ChatListenersWrapper", "post conversation UPDATE for stream (message=null): cid=$cid")
                         }
                     }
                 }
