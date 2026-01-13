@@ -317,7 +317,8 @@ class EaseChatLayout @JvmOverloads constructor(
             val refreshList = mutableListOf<EMMessage>();
             if (messages != null) {
                 for (msg in messages) {
-                    EMLog.e("stream", "onStreamMessageReceived: id"+msg.msgId + " isStream: "+(msg.streamChunk != null))
+                    EMLog.e("stream", "onStreamMessageReceived: id"+msg.msgId + " isStream: "+(msg.streamChunk != null) + " status: "+ msg.streamChunk.status)
+                    EMLog.e("stream", "onStreamMessageReceived: id"+msg.msgId + " text: "+((msg.body as ChatTextMessageBody).message) + " content: "+msg.streamChunk.text)
                     if (msg.streamChunk != null) {
                         if (msg.streamChunk.status == EMMessage.EMStreamStatus.START) {
                             chatNotificationController.updateNotificationView()
