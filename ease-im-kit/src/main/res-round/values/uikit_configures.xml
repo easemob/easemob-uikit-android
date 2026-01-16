@@ -6,7 +6,7 @@
     <!-- Set default avatar round radius -->
     <dimen name="ease_avatar_round_radius">@dimen/ease_corner_extra_small</dimen>
     <!-- Set default avatar border width -->
-    <dimen name="ease_avatar_border_width">-1dp</dimen>
+    <dimen name="ease_avatar_border_width">0dp</dimen>
     <!-- Set default avatar border color -->
     <color name="ease_avatar_border_color">@color/ease_color_primary</color>
 
