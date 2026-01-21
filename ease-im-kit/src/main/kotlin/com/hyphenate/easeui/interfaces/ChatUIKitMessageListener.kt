@@ -26,6 +26,8 @@ open class ChatUIKitMessageListener: ChatMessageListener {
 
     override fun onReactionChanged(messageReactionChangeList: MutableList<ChatMessageReactionChange>?) {}
 
+    override fun onStreamMessageReceived(messages: List<ChatMessage>?) {}
+
     override fun onMessageContentChanged(
         messageModified: ChatMessage?,
         operatorId: String?,

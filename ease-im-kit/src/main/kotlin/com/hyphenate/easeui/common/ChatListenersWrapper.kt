@@ -21,7 +21,9 @@ import com.hyphenate.easeui.model.ChatUIKitEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import android.os.SystemClock
 import java.util.Collections
+import java.util.concurrent.ConcurrentHashMap
 
 
 internal class ChatListenersWrapper : ChatConnectionListener, ChatMessageListener, ChatGroupChangeListener,
@@ -89,6 +91,59 @@ internal class ChatListenersWrapper : ChatConnectionListener, ChatMessageListene
 
     fun removeChatMessageListener(listener:ChatMessageListener){
         chatMessageListener.remove(listener)
+    }
+
+    /**
+     * Streaming message callback (Markdown chunks).
+     *
+     * NOTE: Hyphenate SDK will call this on registered [ChatMessageListener]s.
+     * We must forward it to all UI listeners; otherwise UI never receives chunks.
+     */
+    override fun onStreamMessageReceived(messages: List<ChatMessage>?) {
+        ChatLog.d(
+            "ChatListenersWrapper",
+            "onStreamMessageReceived: size=${messages?.size ?: 0}, forwardTo=${chatMessageListener.size}"
+        )
+        chatMessageListener.let {
+            for (messageListener in it) {
+                try {
+                    messageListener.onStreamMessageReceived(messages)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+
+        // 流式消息不会触发普通的 onMessageReceived → 会话列表可能不刷新。
+        // 这里补发“会话更新事件”，并做节流（避免每个 chunk 都刷新列表导致抖动/卡顿）。
+        try {
+            if (!messages.isNullOrEmpty()) {
+                val now = SystemClock.uptimeMillis()
+                val scope = ChatUIKitClient.getContext()?.mainScope()
+                if (scope != null) {
+                    val convIds = LinkedHashSet<String>()
+                    messages.forEach { m ->
+                        val cid = m.conversationId()
+                        if (!cid.isNullOrEmpty()) convIds.add(cid)
+                    }
+                    convIds.forEach { cid ->
+                        val last = streamConvUpdateTs[cid] ?: 0L
+                        if (now - last >= STREAM_CONV_UPDATE_THROTTLE_MS) {
+                            streamConvUpdateTs[cid] = now
+                            ChatUIKitFlowBus.with<ChatUIKitEvent>(ChatUIKitEvent.EVENT.UPDATE.name)
+                                // 重要：这里不要把 message 填成 conversationId。
+                                // UIKitChatFragment 监听 EVENT.UPDATE + TYPE.CONVERSATION 且 message == conversationId 时，会触发 refreshMessages()，
+                                // 对流式场景来说会导致列表频繁 reload，进而引起“闪烁/打字机被重置/跳动”。
+                                // 会话列表刷新不依赖 message 字段，所以置空即可。
+                                .post(scope, ChatUIKitEvent(ChatUIKitEvent.EVENT.UPDATE.name, ChatUIKitEvent.TYPE.CONVERSATION, null))
+                            ChatLog.d("ChatListenersWrapper", "post conversation UPDATE for stream (message=null): cid=$cid")
+                        }
+                    }
+                }
+            }
+        } catch (t: Throwable) {
+            ChatLog.e("ChatListenersWrapper", "post conversation update for stream failed: ${t.message}")
+        }
     }
 
     fun addGroupChangeListener(listener:ChatGroupChangeListener){
@@ -163,6 +218,9 @@ internal class ChatListenersWrapper : ChatConnectionListener, ChatMessageListene
     }
 
     companion object {
+
+        private const val STREAM_CONV_UPDATE_THROTTLE_MS = 300L
+        private val streamConvUpdateTs = ConcurrentHashMap<String, Long>()
 
         private var instance: ChatListenersWrapper? = null
 

@@ -48,6 +48,7 @@
                 app:layout_constraintBottom_toTopOf="@id/tv_edit"
                 app:layout_constraintHorizontal_bias="0"
                 app:layout_goneMarginBottom="@dimen/ease_size_7"
+                android:maxWidth="270dp"
                 tools:text="Agora Chat" />
 
             <TextView

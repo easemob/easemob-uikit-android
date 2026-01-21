@@ -123,7 +123,11 @@ class ChatUIKitMessageListScrollAndDataController(
      * Whether the list can scroll to the bottom automatically.
      */
     fun isCanAutoScrollToBottom(): Boolean {
-        return isCanAutoScrollToBottom && ChatUIKitClient.getConfig()?.chatConfig?.showUnreadNotificationInChat == true
+        //return isCanAutoScrollToBottom && ChatUIKitClient.getConfig()?.chatConfig?.showUnreadNotificationInChat == true
+        // 自动滚动到底部不应该与“是否显示未读悬浮条(showUnreadNotificationInChat)”强绑定。
+        // 否则在 showUnreadNotificationInChat == false 的情况下，这里会一直返回 false，
+        // 导致流式追加/新消息无法跟随滚动。
+        return isCanAutoScrollToBottom
     }
 
     /**

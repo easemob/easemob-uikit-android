@@ -19,6 +19,7 @@ import com.hyphenate.easeui.widget.chatrow.ChatUIKitRowVoice
 import com.hyphenate.easeui.widget.chatrow.ChatUIKitRowAlert
 import com.hyphenate.easeui.widget.chatrow.ChatUIKitRowThreadNotify
 import com.hyphenate.easeui.widget.chatrow.ChatUIKitRowCombine
+import com.hyphenate.easeui.widget.chatrow.ChatUIKitRowTextMarkDown
 
 object ChatUIKitViewHolderFactory {
     fun createViewHolder(
@@ -30,6 +31,12 @@ object ChatUIKitViewHolderFactory {
                 ChatUIKitRowText(
                     parent.context,
                     isSender = viewType == ChatUIKitMessageViewType.VIEW_TYPE_MESSAGE_TXT_ME
+                )
+            )
+            ChatUIKitMessageViewType.VIEW_TYPE_MESSAGE_MARKDOWN_ME, ChatUIKitMessageViewType.VIEW_TYPE_MESSAGE_MARKDOWN_OTHER -> ChatUIKitTextViewHolder(
+                ChatUIKitRowTextMarkDown(
+                    parent.context,
+                    isSender = viewType == ChatUIKitMessageViewType.VIEW_TYPE_MESSAGE_MARKDOWN_ME
                 )
             )
 
@@ -125,7 +132,13 @@ object ChatUIKitViewHolderFactory {
                 message.getBooleanAttribute(ChatUIKitConstant.MESSAGE_TYPE_RECALL, false)
             val isContactNotify: Boolean =
                 message.getBooleanAttribute(ChatUIKitConstant.MESSAGE_TYPE_CONTACT_NOTIFY, false)
-            if (isThreadNotify) {
+            if (message.streamChunk!= null) {
+                if (direct == ChatMessageDirection.SEND) {
+                    ChatUIKitMessageViewType.VIEW_TYPE_MESSAGE_MARKDOWN_ME
+                } else {
+                    ChatUIKitMessageViewType.VIEW_TYPE_MESSAGE_MARKDOWN_OTHER
+                }
+            }else if (isThreadNotify) {
                 ChatUIKitMessageViewType.VIEW_TYPE_MESSAGE_CHAT_THREAD_NOTIFY
             } else if (isRecallMessage || isContactNotify) {
                 if (direct == ChatMessageDirection.SEND) {
