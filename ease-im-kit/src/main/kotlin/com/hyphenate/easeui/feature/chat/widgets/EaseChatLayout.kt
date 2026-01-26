@@ -319,6 +319,7 @@ class EaseChatLayout @JvmOverloads constructor(
                 for (msg in messages) {
                     EMLog.e("stream", "onStreamMessageReceived: id"+msg.msgId + " isStream: "+(msg.streamChunk != null) + " status: "+ msg.streamChunk.status)
                     EMLog.e("stream", "onStreamMessageReceived: id"+msg.msgId + " text: "+((msg.body as ChatTextMessageBody).message) + " content: "+msg.streamChunk.text)
+                    EMLog.e("stream", "onStreamMessageReceived: ext: "+msg.ext().toString())
                     if (msg.streamChunk != null) {
                         if (msg.streamChunk.status == EMMessage.EMStreamStatus.START) {
                             chatNotificationController.updateNotificationView()
@@ -327,6 +328,9 @@ class EaseChatLayout @JvmOverloads constructor(
                             refreshList.add(msg);
                         }
                     }
+                    val dbMsg = ChatClient.getInstance().chatManager().getMessage(msg.msgId);
+                    EMLog.e("stream", "onStreamMessageReceived: fromdb id"+dbMsg.msgId + " isStream: "+(dbMsg.streamChunk != null) + " status: "+ dbMsg.streamChunk.status)
+                    EMLog.e("stream", "onStreamMessageReceived: fromdb id"+dbMsg.msgId + " text: "+((dbMsg.body as ChatTextMessageBody).message) + " content: "+dbMsg.streamChunk.text)
                 }
             }
             if (refreshList.size > 0) {
