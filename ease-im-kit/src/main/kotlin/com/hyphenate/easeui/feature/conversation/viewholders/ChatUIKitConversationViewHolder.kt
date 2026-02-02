@@ -43,8 +43,8 @@ class ChatUIKitConversationViewHolder(
 
     init {
         viewBinding.let {
-            config?.bindView(it)
             ChatUIKitClient.getConfig()?.avatarConfig?.setAvatarStyle(it.avatar)
+            config?.bindView(it)
             bgDrawable = config?.itemBackground?:it.root.background
         }
     }

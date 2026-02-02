@@ -154,6 +154,8 @@ open class ChatUIKitConversationListFragment: ChatUIKitBaseFragment<FragmentConv
         binding?.listConversation?.setOnItemClickListener(this)
         binding?.listConversation?.setOnItemLongClickListener(this)
         binding?.listConversation?.setOnMenuItemClickListener(this)
+        // Forward list change events to user if provided via Builder#setConversationChangeListener()
+        binding?.listConversation?.setOnConversationChangeListener(conversationListChangeListener)
         binding?.listConversation?.setLoadConversationListener(this)
         setMenuItemClickListener()
         ChatUIKitClient.addContactListener(contactListener)
@@ -414,8 +416,9 @@ open class ChatUIKitConversationListFragment: ChatUIKitBaseFragment<FragmentConv
         /**
          * Set menu item click listener
          */
-        fun setOnMenuItemClickListener(menuItemClickListener: OnMenuItemClickListener?) {
+        fun setOnMenuItemClickListener(menuItemClickListener: OnMenuItemClickListener?): Builder {
             this.menuItemClickListener = menuItemClickListener
+            return this
         }
 
         /**
@@ -477,6 +480,7 @@ open class ChatUIKitConversationListFragment: ChatUIKitBaseFragment<FragmentConv
             fragment.setOnItemLongClickListener(itemLongClickListener)
             fragment.setOnBackPressListener(backPressListener)
             fragment.setConversationChangeListener(conversationChangeListener)
+            fragment.setOnMenuItemClickListener(menuItemClickListener)
             return fragment
         }
     }
