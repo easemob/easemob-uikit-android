@@ -50,7 +50,7 @@ internal class ChatUIKitClientImpl: IChatUIKitClient {
     private val _notifier: ChatUIKitNotifier by lazy { ChatUIKitNotifier(context) }
     companion object {
         private const val TAG = "IChatUIKitClient"
-        private const val uiKitVersion = "4.16.0"
+        private const val uiKitVersion = "4.19.1"
     }
     override fun init(context: Context, options: ChatOptions?) {
         ChatLog.e(TAG, "UIKIt init")

@@ -129,30 +129,28 @@ fun ImageView.loadImageFromMessage(message: ChatMessage?
             return
         }
         // if not auto transfer image, get the remote url
-        if (!ChatClient.getInstance().options.autoTransferMessageAttachments) {
-            ChatLog.e("ImageView", "loadImageFromMessage: autoTransferMessageAttachments is false, will show remote url")
-            var remoteUrl: String? = null
-            if (msg.type == ChatMessageType.IMAGE) {
-                remoteUrl = (msg.body as ChatImageMessageBody).thumbnailUrl
-                // Send image message may not have the thumbnail url, so get the remote url
-                if (remoteUrl.isNullOrEmpty()) {
-                    remoteUrl = (msg.body as ChatImageMessageBody).remoteUrl
-                }
-            } else if (msg.type == ChatMessageType.VIDEO) {
-                remoteUrl = (msg.body as ChatVideoMessageBody).thumbnailUrl
+        ChatLog.e("ImageView", "loadImageFromMessage: local uri dose not exist, remote url will be used.")
+        var remoteUrl: String? = null
+        if (msg.type == ChatMessageType.IMAGE) {
+            remoteUrl = (msg.body as ChatImageMessageBody).thumbnailUrl
+            // Send image message may not have the thumbnail url, so get the remote url
+            if (remoteUrl.isNullOrEmpty()) {
+                remoteUrl = (msg.body as ChatImageMessageBody).remoteUrl
             }
-            loadImageFromLocalOrUrl(null
-                , remoteUrl
-                , showSize
-                , if (msg.type == ChatMessageType.IMAGE) R.drawable.uikit_default_image
-                else R.drawable.uikit_default_video_thumbnail
-                , onSuccess
-                , onError = {
-                    layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT
-                        , ViewGroup.LayoutParams.WRAP_CONTENT)
-                    onError.invoke(it)
-                })
+        } else if (msg.type == ChatMessageType.VIDEO) {
+            remoteUrl = (msg.body as ChatVideoMessageBody).thumbnailUrl
         }
+        loadImageFromLocalOrUrl(null
+            , remoteUrl
+            , showSize
+            , if (msg.type == ChatMessageType.IMAGE) R.drawable.uikit_default_image
+            else R.drawable.uikit_default_video_thumbnail
+            , onSuccess
+            , onError = {
+                layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT
+                    , ViewGroup.LayoutParams.WRAP_CONTENT)
+                onError.invoke(it)
+            })
     }
 }
 
