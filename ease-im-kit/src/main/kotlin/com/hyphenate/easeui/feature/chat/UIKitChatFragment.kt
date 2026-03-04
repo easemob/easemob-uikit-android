@@ -301,6 +301,14 @@ open class UIKitChatFragment: ChatUIKitBaseFragment<UikitFragmentChatBinding>(),
     }
 
     open fun addMenu() {
+        binding?.titleBar?.getToolBar()?.menu?.let { menu ->
+            while (menu.findItem(R.id.chat_menu_pin) != null) {
+                menu.removeItem(R.id.chat_menu_pin)
+            }
+            while (menu.findItem(R.id.chat_menu_topic) != null) {
+                menu.removeItem(R.id.chat_menu_topic)
+            }
+        }
         binding?.titleBar?.inflateMenu(R.menu.uikit_menu_group_topic)
         setMenuItemClickListener()
         if (chatType != ChatUIKitType.GROUP_CHAT || isThread || ChatUIKitClient.getConfig()?.chatConfig?.enableChatThreadMessage == false){
