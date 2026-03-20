@@ -72,7 +72,7 @@ dependencies {
     implementation("io.github.scwang90:refresh-layout-kernel:3.0.0-alpha")
     implementation("io.github.scwang90:refresh-header-material:3.0.0-alpha")
     // Chat SDK
-    api("io.hyphenate:hyphenate-chat:4.19.1")
+    api("io.hyphenate:hyphenate-chat:4.20.0")
 //    implementation(project(mapOf("path" to ":hyphenatechatsdk")))
 }
 
