@@ -14,6 +14,14 @@ interface IConversationListRequest: IAttachView {
     fun loadData()
 
     /**
+     * Load conversations from local or server.
+     * @param forceFromServer Whether to force fetching conversations from server.
+     */
+    fun loadData(forceFromServer: Boolean) {
+        loadData()
+    }
+
+    /**
      * Sort conversations.
      */
     fun sortConversationList(conversations: List<ChatUIKitConversation>)

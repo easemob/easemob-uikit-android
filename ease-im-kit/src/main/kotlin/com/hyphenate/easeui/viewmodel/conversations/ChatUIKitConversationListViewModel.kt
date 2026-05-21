@@ -28,10 +28,14 @@ open class ChatUIKitConversationListViewModel(
     private val repository: ChatUIKitConversationRepository = ChatUIKitConversationRepository(chatManager)
 
     override fun loadData() {
+        loadData(false)
+    }
+
+    override fun loadData(forceFromServer: Boolean) {
         viewModelScope.launch {
             flow {
                 try {
-                    emit(repository.loadData())
+                    emit(repository.loadData(forceFromServer))
                 } catch (e:ChatException){
                     emit(Result.failure<ChatException>(e))
                     inMainScope{

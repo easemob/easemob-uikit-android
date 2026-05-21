@@ -160,7 +160,7 @@ class ChatUIKitConversationListLayout @JvmOverloads constructor(
 
     private fun initListener() {
         binding.refreshLayout.setOnRefreshListener {
-            listViewModel?.loadData()
+            listViewModel?.loadData(true)
         }
 
         binding.rvList.addOnScrollListener(object : RecyclerView.OnScrollListener() {

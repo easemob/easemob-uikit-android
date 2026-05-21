@@ -41,10 +41,10 @@ class ChatUIKitConversationRepository(
     /**
      * Load conversation list from local db or server.
      */
-    suspend fun loadData(): List<ChatUIKitConversation> =
+    suspend fun loadData(forceFromServer: Boolean = false): List<ChatUIKitConversation> =
         withContext(Dispatchers.IO) {
             val hasLoaded: Boolean = ChatUIKitPreferenceManager.getInstance().isLoadedConversationsFromServer()
-            if (hasLoaded) {
+            if (hasLoaded && !forceFromServer) {
                 if (ChatUIKitClient.DEBUG) {
                     ChatLog.d(TAG, "loadData from local db")
                 }
