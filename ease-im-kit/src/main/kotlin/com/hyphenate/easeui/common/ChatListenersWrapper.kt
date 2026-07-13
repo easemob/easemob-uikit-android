@@ -467,6 +467,10 @@ internal class ChatListenersWrapper : ChatConnectionListener, ChatMessageListene
         }
     }
 
+    override fun onRequestToJoinDeclined(p0: String?, p1: String?, p2: String?, p3: String?) {
+        
+    }
+
     override fun onRequestToJoinDeclined(
         groupId: String?,
         groupName: String?,
@@ -646,6 +650,10 @@ internal class ChatListenersWrapper : ChatConnectionListener, ChatMessageListene
         }
     }
 
+    override fun onMemberJoined(p0: String?, p1: String?) {
+
+    }
+
     override fun onMembersJoined(groupId: String?, members:List<String>) {
         chatGroupChangeListener.let {
             for (groupListener in it) {
@@ -656,6 +664,10 @@ internal class ChatListenersWrapper : ChatConnectionListener, ChatMessageListene
                 }
             }
         }
+    }
+
+    override fun onMemberExited(p0: String?, p1: String?) {
+
     }
 
     override fun onMembersExited(groupId: String?, members: List<String>) {
@@ -938,6 +950,10 @@ internal class ChatListenersWrapper : ChatConnectionListener, ChatMessageListene
                     }
                 }
             }
+        }
+
+        override fun onMuteListAdded(p0: String?, p1: MutableList<String>?, p2: Long) {
+
         }
 
         override fun onMuteListAdded(

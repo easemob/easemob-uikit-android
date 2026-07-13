@@ -23,4 +23,5 @@ abstract class UIKitChatRoomListener : ChatRoomChangeListener {
     override fun onWhiteListAdded(chatRoomId: String?, whitelist: List<String?>?) {}
     override fun onWhiteListRemoved(chatRoomId: String?, whitelist: List<String?>?) {}
     override fun onAllMemberMuteStateChanged(chatRoomId: String?, isMuted: Boolean) {}
+    override fun onMuteListAdded(p0: String?, p1: MutableList<String>?, p2: Long) {}
 }

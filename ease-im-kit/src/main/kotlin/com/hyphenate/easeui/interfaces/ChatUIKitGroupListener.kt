@@ -58,4 +58,7 @@ abstract class ChatUIKitGroupListener : ChatGroupChangeListener {
     override fun onWhiteListAdded(groupId: String?, whitelist: List<String?>?) {}
     override fun onWhiteListRemoved(groupId: String?, whitelist: List<String?>?) {}
     override fun onAllMemberMuteStateChanged(groupId: String?, isMuted: Boolean) {}
+    override fun onRequestToJoinDeclined(p0: String?, p1: String?, p2: String?, p3: String?) {}
+    override fun onMemberJoined(p0: String?, p1: String?) {}
+    override fun onMemberExited(p0: String?, p1: String?) {}
 }
