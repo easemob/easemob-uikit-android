@@ -67,56 +67,56 @@ open class ChatUIKitViewModel: ChatUIKitBaseViewModel<IHandleChatResultView>(), 
         _parentId = parentId
     }
 
-    override fun sendChannelAck() {
+    override fun clearConversationUnreadMessageCount() {
         safeInConvScope {
             viewModelScope.launch {
                 flow {
-                    emit(chatRepository.ackConversationRead(it.conversationId()))
+                    emit(chatRepository.clearConversationUnreadMessageCount(it.conversationId()))
                 }
                 .catchChatException { e ->
-                    view?.ackConversationReadFail(e.errorCode, e.description)
+                    view?.clearConversationUnreadMessageCountFail(e.errorCode, e.description)
                 }
                 .collect {
-                    view?.ackConversationReadSuccess()
+                    view?.clearConversationUnreadMessageCountSuccess()
                 }
             }
 
         }
     }
 
-    override fun sendGroupMessageReadAck(messageId: String?, ext: String?) {
+    override fun sendGroupMessageReadReceipt(messageId: String?, ext: String?) {
         safeInConvScope {
             viewModelScope.launch {
                 flow {
-                    emit(chatRepository.ackGroupMessageRead(it.conversationId(), messageId, ext))
+                    emit(chatRepository.sendGroupMessageReadReceipt(it.conversationId(), messageId, ext))
                 }
                 .catchChatException { e ->
-                    view?.ackGroupMessageReadFail(e.errorCode, e.description)
+                    view?.sendGroupMessageReadReceiptFail(e.errorCode, e.description)
                 }
                 .collect {
-                    view?.ackGroupMessageReadSuccess()
+                    view?.sendGroupMessageReadReceiptSuccess()
                 }
             }
         }
     }
 
-    override fun sendMessageReadAck(messageId: String?) {
+    override fun sendMessageReadReceipt(messageId: String?) {
         safeInConvScope {
             viewModelScope.launch {
                 flow {
-                    emit(chatRepository.ackMessageRead(it.conversationId(), messageId))
+                    emit(chatRepository.sendMessageReadReceipt(it.conversationId(), messageId))
                 }
                 .catchChatException { e ->
-                    view?.ackMessageReadFail(e.errorCode, e.description)
+                    view?.sendMessageReadReceiptFail(e.errorCode, e.description)
                 }
                 .collect {
-                    view?.ackMessageReadSuccess()
+                    view?.sendMessageReadReceiptSuccess()
                 }
             }
         }
     }
 
-    override fun sendTextMessage(content: String?, isNeedGroupAck: Boolean) {
+    override fun sendTextMessage(content: String?, isNeedReadReceipt: Boolean) {
         safeInConvScope {
             if (it.isGroupChat) {
                 if (ChatUIKitAtMessageHelper.get().containsAtUsername(content)) {
@@ -126,7 +126,7 @@ open class ChatUIKitViewModel: ChatUIKitBaseViewModel<IHandleChatResultView>(), 
             }
             val message:ChatMessage? = ChatMessage.createTextSendMessage(content, it.conversationId())
             if (it.isGroupChat) {
-                message?.setIsNeedGroupAck(isNeedGroupAck)
+                message?.setIsNeedReadReceipt(isNeedReadReceipt)
             }
             sendMessage(message)
         }
@@ -337,8 +337,15 @@ open class ChatUIKitViewModel: ChatUIKitBaseViewModel<IHandleChatResultView>(), 
                     }
                     setIsChatThreadMessage(it.isChatThread)
                 }
-                ChatUIKitClient.getCurrentUser()?.let { profile ->
-                    addUserInfo(profile.name, profile.avatar)
+                // The global requireAck option was removed from the SDK. Request the read
+                // receipt for single chat messages to keep the previous read-status behavior.
+                if (!it.isGroupChat && !it.isChatroom) {
+                    setIsNeedReadReceipt(true)
+                }
+                if (ChatUIKitClient.getConfig()?.chatConfig?.compatibilityModeForUserInfo == true) {
+                    ChatUIKitClient.getCurrentUser()?.let { profile ->
+                        addUserInfo(profile.name, profile.avatar)
+                    }
                 }
                 addMessageAttributes(message)
                 message.send(onSuccess = {
@@ -373,22 +380,6 @@ open class ChatUIKitViewModel: ChatUIKitBaseViewModel<IHandleChatResultView>(), 
                 it.msgTime = currentTimeMillis
                 ChatClient.getInstance().chatManager().updateMessage(it)
                 sendMessage(it)
-            }
-        }
-    }
-
-    override fun reportMessage(tag: String, reason: String?, msgId: String) {
-        safeInConvScope {
-            viewModelScope.launch {
-                flow {
-                    emit(chatRepository.reportMessage(tag, reason,msgId ))
-                }
-                .catchChatException { e ->
-                    view?.onReportMessageFail(msgId,e.errorCode, e.description)
-                }
-                .collect {
-                    view?.onReportMessageSuccess(msgId)
-                }
             }
         }
     }

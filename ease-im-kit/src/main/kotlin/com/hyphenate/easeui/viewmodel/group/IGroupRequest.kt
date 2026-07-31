@@ -1,15 +1,10 @@
 package com.hyphenate.easeui.viewmodel.group
 
 import com.hyphenate.easeui.common.ChatConversationType
-import com.hyphenate.easeui.common.ChatGroupOptions
+import com.hyphenate.easeui.common.ChatGroupConfigs
 import com.hyphenate.easeui.viewmodel.IAttachView
 
 interface IGroupRequest : IAttachView {
-    /**
-     * load group list
-     */
-    fun loadJoinedGroupData(page:Int)
-
     /**
      * load local group list
      */
@@ -18,17 +13,19 @@ interface IGroupRequest : IAttachView {
     /**
      * Create Group
      * @param groupName
+     * @param avatar
      * @param desc
      * @param members
      * @param reason
-     * @param options
+     * @param configs
      */
     fun createGroup(
         groupName:String,
+        avatar:String,
         desc:String,
         members:MutableList<String>,
         reason:String,
-        options:ChatGroupOptions,
+        configs:ChatGroupConfigs,
     )
 
     /**

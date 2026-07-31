@@ -21,13 +21,9 @@ class ChatUIKitImageViewHolder(itemView: View) : ChatUIKitRowViewHolder(itemView
             //New messages are sent in the onReceiveMessage method of the chat page, except for video
             // , voice and file messages, and send read_ack messages
             message?.let {
-                if (it.direct() === ChatMessageDirection.RECEIVE && !it.isAcked && it.chatType === ChatType.Chat) {
-                    try {
-                        ChatClient.getInstance().chatManager()
-                            .ackMessageRead(it.from, it.msgId)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
+                if (it.direct() === ChatMessageDirection.RECEIVE && !it.isPeerRead && it.chatType === ChatType.Chat) {
+                    ChatClient.getInstance().chatManager()
+                        .asyncSendMessageReadReceipts(listOf(it), null)
                 }
             }
 

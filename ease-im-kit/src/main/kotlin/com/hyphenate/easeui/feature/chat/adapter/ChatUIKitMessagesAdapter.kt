@@ -14,7 +14,7 @@ import com.hyphenate.easeui.common.ChatMessage
 import com.hyphenate.easeui.common.extensions.setParentInfo
 import com.hyphenate.easeui.feature.chat.config.ChatUIKitMessageItemConfig
 import com.hyphenate.easeui.feature.chat.controllers.ChatUIKitAddExtendFunctionViewController
-import com.hyphenate.easeui.feature.chat.interfaces.OnMessageAckSendCallback
+import com.hyphenate.easeui.feature.chat.interfaces.OnMessageReadReceiptSendCallback
 import com.hyphenate.easeui.feature.chat.interfaces.OnMessageListItemClickListener
 import com.hyphenate.easeui.feature.chat.reaction.interfaces.OnChatUIKitReactionErrorListener
 import com.hyphenate.easeui.feature.chat.reply.interfaces.OnMessageReplyViewClickListener
@@ -31,7 +31,7 @@ open class ChatUIKitMessagesAdapter(
 ): ChatUIKitBaseRecyclerViewAdapter<ChatMessage>() {
     private var parentId: String? = null
     private var parentMsgId: String? = null
-    private var messageAckSendCallback: OnMessageAckSendCallback? = null
+    private var messageReadReceiptSendCallback: OnMessageReadReceiptSendCallback? = null
     private var reactionErrorListener: OnChatUIKitReactionErrorListener? = null
     private var itemClickListener: OnMessageListItemClickListener? = null
     private var replyViewClickListener: OnMessageReplyViewClickListener? = null
@@ -54,7 +54,7 @@ open class ChatUIKitMessagesAdapter(
         }
         // Set message ack send callback.
         if (holder is ChatUIKitRowViewHolder) {
-            holder.setOnMessageAckSendCallback(messageAckSendCallback)
+            holder.setOnMessageReadReceiptSendCallback(messageReadReceiptSendCallback)
         }
 
         super.onBindViewHolder(holder, position)
@@ -146,8 +146,8 @@ open class ChatUIKitMessagesAdapter(
     /**
      * Set message ack send callback.
      */
-    fun setOnMessageAckSendCallback(callback: OnMessageAckSendCallback?) {
-        this.messageAckSendCallback = callback
+    fun setOnMessageReadReceiptSendCallback(callback: OnMessageReadReceiptSendCallback?) {
+        this.messageReadReceiptSendCallback = callback
     }
 
     /**

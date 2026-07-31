@@ -125,19 +125,19 @@ open class ChatUIKitRowText @JvmOverloads constructor(
             if (isSend() && ChatUIKitDingMessageHelper.get().isDingMessage(this)) {
                 ackedView?.let {
                     it.visibility = View.VISIBLE
-                    it.text = context.getString(R.string.uikit_group_ack_read_count, groupAckCount())
+                    it.text = context.getString(R.string.uikit_group_ack_read_count, readReceiptCount())
                 }
             }
             // Set ack-user list change listener.
-            ChatUIKitDingMessageHelper.get().setUserUpdateListener(this, object : ChatUIKitDingMessageHelper.IAckUserUpdateListener {
+            ChatUIKitDingMessageHelper.get().setUserUpdateListener(this, object : ChatUIKitDingMessageHelper.IReadReceiptUserUpdateListener {
                 override fun onUpdate(list: List<String>?) {
-                    onAckUserUpdate(list?.size ?: 0)
+                    onReadReceiptUserUpdate(list?.size ?: 0)
                 }
             })
         }
     }
 
-    fun onAckUserUpdate(count: Int) {
+    fun onReadReceiptUserUpdate(count: Int) {
         context.mainScope().launch {
             if (isSender) {
                 ackedView?.visibility = View.VISIBLE

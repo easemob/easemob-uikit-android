@@ -44,7 +44,7 @@ class ChatUIKitThreadController(
 
     }
 
-    fun sendTextMessage(content: String?, isNeedGroupAck: Boolean = false){
+    fun sendTextMessage(content: String?, isNeedReadReceipt: Boolean = false){
         viewModel?.checkoutConvScope()
         _conversation?.let {
             if (it.isGroupChat) {
@@ -55,7 +55,7 @@ class ChatUIKitThreadController(
             }
             val message = ChatMessage.createTextSendMessage(content, it.conversationId())
             if (it.isGroupChat) {
-                message.setIsNeedGroupAck(isNeedGroupAck)
+                message.setIsNeedReadReceipt(isNeedReadReceipt)
             }
             setMessage(message)
         }

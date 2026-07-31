@@ -10,7 +10,6 @@ import com.hyphenate.easeui.common.ChatValueCallback
 import com.hyphenate.easeui.demo.BuildConfig
 import com.hyphenate.easeui.demo.DemoApplication
 import com.hyphenate.easeui.demo.R
-import com.hyphenate.easeui.demo.base.ErrorCode
 import com.hyphenate.easeui.demo.bean.LoginResult
 import com.hyphenate.easeui.model.ChatUIKitProfile
 import com.hyphenate.easeui.model.ChatUIKitUser
@@ -27,31 +26,6 @@ import kotlin.coroutines.suspendCoroutine
  * 作为EMClient的repository,处理EMClient相关的逻辑
  */
 class EMClientRepository {
-    /**
-     * 登录过后需要加载的数据
-     * @return
-     */
-    suspend fun loadAllInfoFromHX(): Boolean =
-        withContext(Dispatchers.IO) {
-            suspendCoroutine { continuation ->
-                if (ChatClient.getInstance().isLoggedInBefore && ChatClient.getInstance().options.autoLogin) {
-                    loadAllConversationsAndGroups()
-                    continuation.resume(true)
-                } else {
-                    continuation.resumeWithException(ChatException(ErrorCode.EM_NOT_LOGIN, ""))
-                }
-            }
-        }
-
-    /**
-     * 从本地数据库加载所有的对话及群组
-     */
-    private fun loadAllConversationsAndGroups() {
-        // 从本地数据库加载所有的对话及群组
-        ChatClient.getInstance().chatManager().loadAllConversations()
-        ChatClient.getInstance().groupManager().loadAllGroups()
-    }
-
     /**
      * 注册
      * @param userName
@@ -171,9 +145,6 @@ class EMClientRepository {
         val currentUser = ChatClient.getInstance().currentUser
         val user = ChatUIKitUser(currentUser)
         continuation.resume(user)
-
-        // ** manually load all local groups and conversation
-        loadAllConversationsAndGroups()
     }
 
     suspend fun loginFromServe(userName: String, userPassword: String): LoginResult =

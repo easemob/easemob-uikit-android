@@ -151,7 +151,7 @@ open class ChatUIKitGroupDetailActivity:ChatUIKitBaseActivity<UikitLayoutGroupDe
     }
 
     private fun initSwitch(){
-        val isSilent = ChatUIKitClient.getCache().getMutedConversationList().containsKey(groupId)
+        val isSilent = groupId?.let(ChatUIKitClient::checkMutedConversationList) == true
         if (isSilent){
             binding.switchItemDisturb.setChecked(true)
         }else{

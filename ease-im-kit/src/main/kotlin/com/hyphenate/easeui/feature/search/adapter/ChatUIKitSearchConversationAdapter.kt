@@ -8,17 +8,13 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import coil.load
-import com.hyphenate.easeui.ChatUIKitClient
 import com.hyphenate.easeui.R
 import com.hyphenate.easeui.base.ChatUIKitBaseRecyclerViewAdapter
-import com.hyphenate.easeui.common.extensions.getChatroomName
-import com.hyphenate.easeui.common.extensions.getGroupNameFromId
+import com.hyphenate.easeui.common.extensions.getDisplayInfo
 import com.hyphenate.easeui.databinding.UikitLayoutGroupSelectContactBinding
 import com.hyphenate.easeui.model.ChatUIKitConversation
 import com.hyphenate.easeui.model.isChatRoom
 import com.hyphenate.easeui.model.isGroupChat
-import com.hyphenate.easeui.provider.getSyncProfile
-import com.hyphenate.easeui.provider.getSyncUser
 
 class ChatUIKitSearchConversationAdapter: ChatUIKitBaseRecyclerViewAdapter<ChatUIKitConversation>() {
     private var query : String = ""
@@ -43,36 +39,20 @@ class ChatUIKitSearchConversationAdapter: ChatUIKitBaseRecyclerViewAdapter<ChatU
                     cbSelect.visibility = View.GONE
 
                     // Set conversation avatar and name.
-                    if (item.isGroupChat()) {
-                        emPresence.setUserAvatarData(avatar = R.drawable.uikit_default_group_avatar
-                            ,nickname = null)
-                        tvName.text = item.conversationId.getGroupNameFromId()
-                        ChatUIKitClient.getGroupProfileProvider()?.getSyncProfile(item.conversationId)?.let { profile ->
-                            if (profile.name.isNullOrEmpty().not()) {
-                                tvName.text = profile.name
-                            }
-                            emPresence.getUserAvatar().load(profile.avatar) {
-                                placeholder(R.drawable.uikit_default_group_avatar)
-                                error(R.drawable.uikit_default_group_avatar)
-                            }
-                        }
-                    } else if (item.isChatRoom()) {
-                        emPresence.setUserAvatarData(avatar = R.drawable.ease_default_chatroom_avatar
-                            ,nickname = null)
-                        tvName.text = item.conversationId.getChatroomName()
-                    } else {
-                        emPresence.setUserAvatarData(avatar = R.drawable.uikit_default_avatar
-                            ,nickname = item.conversationId)
-                        tvName.text = item.conversationId
-                        ChatUIKitClient.getUserProvider()?.getSyncUser(item.conversationId)?.let { profile ->
-                            tvName.text = profile.getRemarkOrName()
-                            emPresence.getUserAvatar().load(profile.avatar) {
-                                placeholder(R.drawable.uikit_default_avatar)
-                                error(R.drawable.uikit_default_avatar)
-                            }
+                    val displayInfo = item.getDisplayInfo()
+                    val placeholderRes = when {
+                        item.isGroupChat() -> R.drawable.uikit_default_group_avatar
+                        item.isChatRoom() -> R.drawable.ease_default_chatroom_avatar
+                        else -> R.drawable.uikit_default_avatar
+                    }
+                    emPresence.setUserAvatarData(avatar = placeholderRes, nickname = null)
+                    tvName.text = displayInfo.name
+                    if (displayInfo.avatar.isNullOrEmpty().not()) {
+                        emPresence.getUserAvatar().load(displayInfo.avatar) {
+                            placeholder(placeholderRes)
+                            error(placeholderRes)
                         }
                     }
-
 
                     val title  = tvName.text.toString().trim()
                     val spannableString = SpannableString(title)

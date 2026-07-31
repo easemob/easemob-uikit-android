@@ -301,10 +301,25 @@ The `ease-im-kit` module mainly provides the following capabilities:
 You need to initialize the UIKit before using it:
 
 ```kotlin
+import com.hyphenate.chat.EMOptions.EMDataSyncType
+import java.util.EnumSet
+
 val options = ChatOptions()
 options.appKey = "[Your appkey]"
+options.setEnableUserInfo(true)
+options.setDataSyncType(
+    EnumSet.of(
+        EMDataSyncType.CONVERSATIONS,
+        EMDataSyncType.CONTACTS,
+        EMDataSyncType.JOINED_GROUPS,
+    )
+)
 ChatUIKitClient.init(this, options)
 ```
+
+SDK 5.0 does not synchronize conversations, contacts, or joined groups unless the corresponding
+`EMDataSyncType` values are enabled. User information auto-management is also disabled by default.
+
 ### Log in to the UIKit
 
 ```kotlin
@@ -1016,6 +1031,7 @@ ChatUIKitConfig provides the following properties:
 
 | Property                                  | Description                                                          |
 | -------------------------------------- | ---------------------------------------------------------------- |
+| compatibilityModeForUserInfo           | Whether to add the current user's nickname and avatar to the message extension for compatibility with earlier UIKit versions. The default value is `false`. |
 | enableReplyMessage                     | Whether to enable the message reply function: <br/> - (Default) true： Yes  <br/> - false： No  |
 | enableModifyMessageAfterSent           | Whether to enable the message edit function: <br/> - (Default) true： Yes  <br/> - false： No   |
 | timePeriodCanRecallMessage             | The message recall duration, which is 2 minutes by default. |
@@ -1052,7 +1068,15 @@ User information is used in many places in UIKit and needs to be provided by dev
 
 During a call to the login API `ChatUIKitClient.login`, the user needs to pass in an `ChatUIKitProfile` object. This object contains the following attributes:
 - `id`: The user ID. This parameter is required.
-- `name` and `avatar`: Used to display the nickname and avatar of the current user. When sending a message, you can set the two parameters to the `ext` field of the message to allow other users to present the two parameters. If you fail to pass in the two parameters during login, you can call `ChatUIKitClient.updateCurrentUser` to update the current user's information after login.
+- `name` and `avatar`: Used to display the nickname and avatar of the current user. If you fail to pass in the two parameters during login, you can call `ChatUIKitClient.updateCurrentUser` to update the current user's information after login.
+
+To support clients using earlier UIKit versions, enable compatibility mode to add the current user's `name` and `avatar` to the `ease_chat_uikit_user_info` message extension. This option is disabled by default and does not affect parsing user information from received messages.
+
+```kotlin
+ChatUIKitClient.getConfig()
+    ?.chatConfig
+    ?.compatibilityModeForUserInfo = true
+```
 
 ### User information providing
 

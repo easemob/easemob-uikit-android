@@ -98,6 +98,7 @@ open class ChatUIKitContactsListFragment: ChatUIKitBaseFragment<FragmentContactL
 
     override fun initView(savedInstanceState: Bundle?) {
         super.initView(savedInstanceState)
+        initEventBus()
         arguments?.run {
             binding?.run {
                 titleContact.visibility = if (getBoolean(Constant.KEY_USE_TITLE, false)) View.VISIBLE else View.GONE
@@ -258,7 +259,7 @@ open class ChatUIKitContactsListFragment: ChatUIKitBaseFragment<FragmentContactL
         }
     }
 
-    override fun initData() {
+    private fun initEventBus() {
         ChatUIKitFlowBus.withStick<ChatUIKitEvent>(ChatUIKitEvent.EVENT.REMOVE.name).register(viewLifecycleOwner) { event ->
             if (event.isContactChange) {
                 refreshData()
@@ -270,10 +271,18 @@ open class ChatUIKitContactsListFragment: ChatUIKitBaseFragment<FragmentContactL
             }
         }
         ChatUIKitFlowBus.with<ChatUIKitEvent>(ChatUIKitEvent.EVENT.UPDATE.name).register(viewLifecycleOwner) {
-            if (it.isNotifyChange) {
+            if (it.isContactChange) {
+                refreshData()
+            } else if (it.isNotifyChange) {
                 refreshRequest()
             }
         }
+        ChatUIKitFlowBus.with<ChatUIKitEvent>(ChatUIKitEvent.EVENT.UPDATE + ChatUIKitEvent.TYPE.CONTACT)
+            .register(viewLifecycleOwner) {
+                if (it.isContactChange) {
+                    refreshData()
+                }
+            }
     }
 
     private fun refreshData() {
@@ -363,10 +372,9 @@ open class ChatUIKitContactsListFragment: ChatUIKitBaseFragment<FragmentContactL
         mContext.mainScope().launch {
             headerList?.map {
                 if (it.headerTitle == getString(R.string.uikit_contact_header_request)){
-                    val systemConversation = ChatUIKitNotificationMsgManager.getInstance().getConversation()
-                    systemConversation.let { cv->
-                        it.headerUnReadCount = cv.unreadMsgCount
-                    }
+                    // SDK 5.0 创建的本地系统消息默认为已读，申请角标改由会话游标计算。
+                    it.headerUnReadCount = ChatUIKitNotificationMsgManager.getInstance()
+                        .getRequestUnreadCount()
                 }
             }
             headerAdapter?.setData(headerList?.toMutableList())

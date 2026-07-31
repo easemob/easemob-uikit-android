@@ -7,7 +7,7 @@ import com.hyphenate.easeui.common.ChatError
 import com.hyphenate.easeui.common.ChatException
 import com.hyphenate.easeui.common.ChatGroup
 import com.hyphenate.easeui.common.ChatGroupManager
-import com.hyphenate.easeui.common.ChatGroupOptions
+import com.hyphenate.easeui.common.ChatGroupConfigs
 import com.hyphenate.easeui.common.extensions.getOwnerInfo
 import com.hyphenate.easeui.common.extensions.toUser
 import com.hyphenate.easeui.common.helper.ContactSortedHelper
@@ -20,7 +20,6 @@ import com.hyphenate.easeui.common.suspends.destroyChatGroup
 import com.hyphenate.easeui.common.suspends.fetchChatGroupMembers
 import com.hyphenate.easeui.common.suspends.fetchGroupDetails
 import com.hyphenate.easeui.common.suspends.fetchGroupMemberAllAttributes
-import com.hyphenate.easeui.common.suspends.fetchJoinedGroupsFromServer
 import com.hyphenate.easeui.common.suspends.leaveChatGroup
 import com.hyphenate.easeui.common.suspends.removeChatGroupMember
 import com.hyphenate.easeui.common.suspends.setGroupMemberAttributes
@@ -47,16 +46,6 @@ class ChatUIKitGroupRepository(
         private const val LIMIT = 200
     }
 
-    /**
-     * Load joined group list from local db or server.
-     */
-    suspend fun loadJoinedGroupData(
-        page:Int,pageSize: Int,needMemberCount:Boolean,needRole:Boolean
-    ):MutableList<ChatGroup> =
-        withContext(Dispatchers.IO){
-            groupManager.fetchJoinedGroupsFromServer(page, pageSize, needMemberCount, needRole)
-        }.toMutableList()
-
     suspend fun loadLocalJoinedGroupData():MutableList<ChatGroup> =
         withContext(Dispatchers.IO){
             groupManager.allGroups
@@ -67,14 +56,15 @@ class ChatUIKitGroupRepository(
      */
     suspend fun createGroup(
         groupName:String,
+        avatar:String,
         desc:String,
         members:MutableList<String>,
         reason:String,
-        options:ChatGroupOptions,
+        configs:ChatGroupConfigs,
     ):ChatGroup =
         withContext(Dispatchers.IO){
             groupManager.createChatGroup(
-                groupName, desc, members, reason, options
+                groupName, avatar, desc, members, reason, configs
             )
         }
 

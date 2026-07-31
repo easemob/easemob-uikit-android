@@ -6,21 +6,20 @@ import android.view.ViewGroup
 import com.hyphenate.easeui.ChatUIKitClient
 import com.hyphenate.easeui.base.ChatUIKitBaseRecyclerViewAdapter
 import com.hyphenate.easeui.common.ChatClient
-import com.hyphenate.easeui.common.ChatException
+import com.hyphenate.easeui.common.ChatCallback
 import com.hyphenate.easeui.common.ChatMessage
 import com.hyphenate.easeui.common.ChatMessageType
 import com.hyphenate.easeui.common.ChatType
-import com.hyphenate.easeui.common.extensions.ioScope
 import com.hyphenate.easeui.common.extensions.isSend
 import com.hyphenate.easeui.common.extensions.mainScope
 import com.hyphenate.easeui.feature.chat.interfaces.OnItemBubbleClickListener
-import com.hyphenate.easeui.feature.chat.interfaces.OnMessageAckSendCallback
+import com.hyphenate.easeui.feature.chat.interfaces.OnMessageReadReceiptSendCallback
 import com.hyphenate.easeui.widget.chatrow.ChatUIKitRow
 import kotlinx.coroutines.launch
 
 open class ChatUIKitRowViewHolder(itemView: View): ChatUIKitBaseRecyclerViewAdapter.ViewHolder<ChatMessage>(itemView),
     OnItemBubbleClickListener {
-    private var messageAckSendCallback: OnMessageAckSendCallback? = null
+    private var messageReadReceiptSendCallback: OnMessageReadReceiptSendCallback? = null
     private val TAG = ChatUIKitRowViewHolder::class.java.simpleName
     protected var mContext: Context = itemView.context
     private var chatRow: ChatUIKitRow? = null
@@ -91,33 +90,27 @@ open class ChatUIKitRowViewHolder(itemView: View): ChatUIKitBaseRecyclerViewAdap
             return
         }
         message?.let { msg ->
-            // make message as read
-            mContext.ioScope().launch {
-                ChatClient.getInstance().chatManager().getConversation(msg.conversationId())?.let {
-                    it.markMessageAsRead(msg.msgId)
-                }
-            }
-            // send message read ack
+            // send message read receipt
             val type = msg.type
             //Video, voice and files need to be clicked before sending
             if (type === ChatMessageType.VIDEO || type === ChatMessageType.VOICE || type === ChatMessageType.FILE) {
                 return
             }
-            if (!msg.isAcked && msg.chatType === ChatType.Chat) {
-                mContext.ioScope().launch {
-                    try {
-                        ChatClient.getInstance().chatManager()
-                            .ackMessageRead(msg.from, msg.msgId)
-                        getContext().mainScope().launch {
-                            messageAckSendCallback?.onSendAckSuccess(msg)
+            if (!msg.isPeerRead && msg.chatType === ChatType.Chat) {
+                ChatClient.getInstance().chatManager()
+                    .asyncSendMessageReadReceipts(listOf(msg), object : ChatCallback {
+                        override fun onSuccess() {
+                            getContext().mainScope().launch {
+                                messageReadReceiptSendCallback?.onSendReadReceiptSuccess(msg)
+                            }
                         }
-                    } catch (e: ChatException) {
-                        e.printStackTrace()
-                        getContext().mainScope().launch {
-                            messageAckSendCallback?.onSendAckError(msg, e.errorCode, e.message)
+
+                        override fun onError(code: Int, errorMsg: String?) {
+                            getContext().mainScope().launch {
+                                messageReadReceiptSendCallback?.onSendReadReceiptError(msg, code, errorMsg)
+                            }
                         }
-                    }
-                }
+                    })
             }
         }
     }
@@ -133,7 +126,7 @@ open class ChatUIKitRowViewHolder(itemView: View): ChatUIKitBaseRecyclerViewAdap
     /**
      * Set message ack send callback.
      */
-    fun setOnMessageAckSendCallback(callback: OnMessageAckSendCallback?) {
-        this.messageAckSendCallback = callback
+    fun setOnMessageReadReceiptSendCallback(callback: OnMessageReadReceiptSendCallback?) {
+        this.messageReadReceiptSendCallback = callback
     }
 }

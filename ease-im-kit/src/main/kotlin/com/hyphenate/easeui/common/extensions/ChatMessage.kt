@@ -249,7 +249,6 @@ internal fun ChatMessage.createNotifyPinMessage(operationUser: String?): ChatMes
     msgNotification.to = to
     msgNotification.msgTime = msgTime
     msgNotification.chatType = chatType
-    msgNotification.isUnread = false
     msgNotification.msgTime = System.currentTimeMillis()
     msgNotification.setLocalTime(System.currentTimeMillis())
     msgNotification.setAttribute(ChatUIKitConstant.MESSAGE_PIN_NOTIFY,true)
@@ -352,49 +351,120 @@ internal fun ChatMessage.isSend(): Boolean {
 }
 
 /**
- * Add userinfo to message when sending message.
+ * Add user information to a message for compatibility with earlier UIKit versions.
  */
 internal fun ChatMessage.addUserInfo(nickname: String?, avatarUrl: String?, remark: String? = null) {
-    if (nickname.isNullOrEmpty() && avatarUrl.isNullOrEmpty() && remark.isNullOrEmpty()) {
-        return
-    }
+    val attributes = buildCompatibilityUserInfoAttributes(nickname, avatarUrl, remark)
+    if (attributes.isEmpty()) return
+
     val info = JSONObject()
-    if (!nickname.isNullOrEmpty()) info.put(MESSAGE_EXT_USER_INFO_NICKNAME_KEY, nickname)
-    if (!avatarUrl.isNullOrEmpty()) info.put(MESSAGE_EXT_USER_INFO_AVATAR_KEY, avatarUrl)
-    if (!remark.isNullOrEmpty()) info.put(MESSAGE_EXT_USER_INFO_REMARK_KEY, remark)
+    attributes.forEach { (key, value) -> info.put(key, value) }
     setAttribute(ChatUIKitConstant.MESSAGE_EXT_USER_INFO_KEY, info)
+}
+
+internal fun buildCompatibilityUserInfoAttributes(
+    nickname: String?,
+    avatarUrl: String?,
+    remark: String? = null,
+): Map<String, String> = buildMap {
+    if (!nickname.isNullOrEmpty()) put(MESSAGE_EXT_USER_INFO_NICKNAME_KEY, nickname)
+    if (!avatarUrl.isNullOrEmpty()) put(MESSAGE_EXT_USER_INFO_AVATAR_KEY, avatarUrl)
+    if (!remark.isNullOrEmpty()) put(MESSAGE_EXT_USER_INFO_REMARK_KEY, remark)
 }
 
 /**
  * Parse userinfo from message when receiving a message.
  */
 internal fun ChatMessage.getUserInfo(updateCache: Boolean = false): ChatUIKitProfile? {
-    ChatUIKitClient.getUserProvider()?.getSyncUser(from)?.let {
-        return it
+    val cache = ChatUIKitClient.getCache()
+    val senderInfo = getSenderInfo()
+    if (isGroupChat() && senderInfo != null) {
+        cache.insertGroupNameCard(conversationId(), from, senderInfo.namecard, msgTime)
     }
-    var profile: ChatUIKitProfile? = ChatUIKitProfile(from)
+    if (updateCache && senderInfo != null) {
+        cache.insertSdkUser(
+            ChatUIKitProfile(
+                id = from,
+                name = senderInfo.nickname,
+                avatar = senderInfo.avatar,
+                remark = senderInfo.remark,
+            ).apply { setTimestamp(msgTime) }
+        )
+    }
+
+    // Ensure the app provider gets one chance to populate its own cache even when SDK data exists.
+    ChatUIKitClient.getUserProvider()?.getSyncUser(from)
+
+    var legacyProfile: ChatUIKitProfile? = null
     try {
         getJSONObjectAttribute(ChatUIKitConstant.MESSAGE_EXT_USER_INFO_KEY)?.let { info ->
-            profile = ChatUIKitProfile(
+            legacyProfile = ChatUIKitProfile(
                 id = from,
                 name = info.optString(MESSAGE_EXT_USER_INFO_NICKNAME_KEY),
                 avatar = info.optString(MESSAGE_EXT_USER_INFO_AVATAR_KEY),
                 remark = info.optString(MESSAGE_EXT_USER_INFO_REMARK_KEY)
             )
-            profile?.setTimestamp(msgTime)
-            ChatUIKitClient.getCache().insertMessageUser(from, profile!!)
-            profile
+            legacyProfile?.setTimestamp(msgTime)
+            cache.insertMessageUser(from, legacyProfile!!)
         } ?: kotlin.run {
-            ChatUIKitClient.getCache().getMessageUserInfo(from)
+            legacyProfile = cache.getMessageUserInfo(from)
         }
     } catch (e: ChatException) {
-        profile = ChatUIKitClient.getCache().getMessageUserInfo(from)
+        legacyProfile = cache.getMessageUserInfo(from)
     }
-    if (profile == null) {
-        profile = ChatUIKitProfile(from)
-    }
-    return profile
+
+    return resolveMessageUserProfile(
+        userId = from,
+        providerProfile = cache.getProviderUser(from),
+        sdkProfile = cache.getSdkUser(from),
+        senderNickname = senderInfo?.nickname,
+        senderAvatar = senderInfo?.avatar,
+        senderRemark = senderInfo?.remark,
+        groupNameCard = if (isGroupChat()) {
+            cache.getGroupNameCard(conversationId(), from)?.nameCard
+        } else {
+            null
+        },
+        legacyProfile = legacyProfile,
+        isGroupChat = isGroupChat(),
+    )
 }
+
+internal fun resolveMessageUserProfile(
+    userId: String,
+    providerProfile: ChatUIKitProfile?,
+    sdkProfile: ChatUIKitProfile?,
+    senderNickname: String?,
+    senderAvatar: String?,
+    senderRemark: String?,
+    groupNameCard: String?,
+    legacyProfile: ChatUIKitProfile?,
+    isGroupChat: Boolean,
+): ChatUIKitProfile {
+    val name = firstNotEmpty(
+        providerProfile?.name,
+        sdkProfile?.name,
+        senderNickname,
+        legacyProfile?.name,
+    )
+    val avatar = firstNotEmpty(
+        providerProfile?.avatar,
+        sdkProfile?.avatar,
+        senderAvatar,
+        legacyProfile?.avatar,
+    )
+    val regularRemark = firstNotEmpty(
+        providerProfile?.remark,
+        sdkProfile?.remark,
+        senderRemark,
+        legacyProfile?.remark,
+    )
+    val remark = if (isGroupChat) firstNotEmpty(groupNameCard, regularRemark) else regularRemark
+    return ChatUIKitProfile(userId, name, avatar, remark)
+}
+
+private fun firstNotEmpty(vararg values: String?): String? =
+    values.firstOrNull { !it.isNullOrEmpty() }
 
 internal fun ChatMessage.getThumbnailLocalUri(context: Context): Uri? {
     var imageUri: Uri? = null

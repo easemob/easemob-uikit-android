@@ -11,7 +11,6 @@ import android.view.View
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.fragment.app.FragmentManager
-import com.hyphenate.easeui.ChatUIKitClient
 import com.hyphenate.easeui.R
 import com.hyphenate.easeui.common.ChatPathUtils
 import com.hyphenate.easeui.common.ChatClient
@@ -23,7 +22,7 @@ import com.hyphenate.easeui.common.ChatMessageType
 import com.hyphenate.easeui.common.ChatVersionUtils
 import com.hyphenate.easeui.common.ChatUIKitConstant
 import com.hyphenate.easeui.common.dialog.CustomDialog
-import com.hyphenate.easeui.common.extensions.getUserInfo
+import com.hyphenate.easeui.common.extensions.resolveConversationDisplayInfo
 import com.hyphenate.easeui.common.extensions.isSdcardExist
 import com.hyphenate.easeui.common.utils.ChatUIKitCompat
 import com.hyphenate.easeui.common.utils.ChatUIKitFileUtils
@@ -36,8 +35,6 @@ import com.hyphenate.easeui.common.helper.ChatUIKitDingMessageHelper
 import com.hyphenate.easeui.interfaces.OnUserListItemClickListener
 import com.hyphenate.easeui.model.ChatUIKitUser
 import com.hyphenate.easeui.model.getNickname
-import com.hyphenate.easeui.provider.getSyncProfile
-import com.hyphenate.easeui.provider.getSyncUser
 import java.io.File
 import java.io.IOException
 
@@ -131,30 +128,7 @@ open class ChatUIKitAttachmentController(
 
             override fun onUserListItemClick(v: View?, position: Int, user: ChatUIKitUser?) {
                 super.onUserListItemClick(v, position, user)
-                var showName = when (chatType) {
-                    ChatUIKitType.GROUP_CHAT -> {
-                        val groupName = ChatUIKitClient.getGroupProfileProvider()?.getSyncProfile(conversationId)?.name
-                        if (groupName.isNullOrEmpty().not()) {
-                            groupName
-                        } else {
-                            ChatClient.getInstance().groupManager().getGroup(conversationId)?.groupName
-                                ?: conversationId
-                        }
-                    }
-                    ChatUIKitType.CHATROOM -> {
-                        ChatClient.getInstance().chatroomManager().getChatRoom(conversationId)?.name
-                            ?: conversationId
-                    }
-                    else -> {
-                        val nickname = ChatUIKitClient.getUserProvider()?.getSyncUser(conversationId)?.getRemarkOrName()
-                        if (nickname.isNullOrEmpty() || nickname == conversationId) {
-                            ChatClient.getInstance().chatManager().getConversation(conversationId)?.latestMessageFromOthers?.getUserInfo()?.name
-                                ?: conversationId
-                        } else {
-                            nickname
-                        }
-                    }
-                }
+                val showName = resolveConversationDisplayInfo(conversationId, chatType).name
                 CustomDialog(mContext
                     , mContext.getString(R.string.uikit_chat_message_user_card_select_title)
                     , mContext.getString(R.string.uikit_chat_message_user_card_share_content, user?.getNickname(), showName)

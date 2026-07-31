@@ -68,7 +68,7 @@ interface IChatMessageListLayout: IRecyclerView {
     /**
      * Set message ack send callback.
      */
-    fun setOnMessageAckSendCallback(callback: OnMessageAckSendCallback?)
+    fun setOnMessageReadReceiptSendCallback(callback: OnMessageReadReceiptSendCallback?)
 
     /**
      * Set error listener.

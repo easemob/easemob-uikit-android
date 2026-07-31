@@ -7,7 +7,7 @@ import com.hyphenate.easeui.common.ChatClient
 import com.hyphenate.easeui.common.ChatConversationType
 import com.hyphenate.easeui.common.ChatError
 import com.hyphenate.easeui.common.ChatGroupManager
-import com.hyphenate.easeui.common.ChatGroupOptions
+import com.hyphenate.easeui.common.ChatGroupConfigs
 import com.hyphenate.easeui.common.ChatLog
 import com.hyphenate.easeui.common.extensions.catchChatException
 import com.hyphenate.easeui.common.extensions.collectWithCheckErrorCode
@@ -28,32 +28,9 @@ open class ChatUIKitGroupViewModel(
     private val stopTimeoutMillis: Long = 5000
 ): ChatUIKitBaseViewModel<IUIKitGroupResultView>(),IGroupRequest{
 
-    companion object{
-        const val pageSize:Int = 20
-        const val needMemberCount:Boolean = false
-        const val needRole:Boolean = false
-    }
-
     private val repository:ChatUIKitGroupRepository = ChatUIKitGroupRepository(groupManager)
     private val convRepository: ChatUIKitConversationRepository = ChatUIKitConversationRepository()
     private val threadRepository by lazy { ChatUIKitThreadRepository() }
-
-    override fun loadJoinedGroupData(page:Int) {
-        viewModelScope.launch {
-            flow {
-                emit(repository.loadJoinedGroupData(page,pageSize,needMemberCount,needRole))
-            }
-            .catchChatException { e ->
-                view?.loadGroupListFail(e.errorCode, e.description)
-            }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(stopTimeoutMillis), null)
-            .collect {
-                if (it != null) {
-                    view?.loadGroupListSuccess(it.toMutableList())
-                }
-            }
-        }
-    }
 
     override fun loadLocalJoinedGroupData() {
         viewModelScope.launch {
@@ -74,14 +51,15 @@ open class ChatUIKitGroupViewModel(
 
     override fun createGroup(
         groupName: String,
+        avatar: String,
         desc: String,
         members: MutableList<String>,
         reason: String,
-        options: ChatGroupOptions
+        configs: ChatGroupConfigs
     ) {
         viewModelScope.launch {
             flow {
-                emit(repository.createGroup(groupName, desc, members, reason, options))
+                emit(repository.createGroup(groupName, avatar, desc, members, reason, configs))
             }
             .catchChatException { e ->
                 view?.createGroupFail(e.errorCode, e.description)

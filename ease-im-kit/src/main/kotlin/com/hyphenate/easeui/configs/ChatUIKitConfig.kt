@@ -7,6 +7,15 @@ import com.hyphenate.easeui.common.extensions.getIntegerResource
 class ChatUIKitConfig {
 
     /**
+     * Whether to add the current user's nickname and avatar to the message extension
+     * for compatibility with earlier UIKit versions.
+     *
+     * This option is disabled by default. Receiving and parsing legacy user information
+     * is not affected by this option.
+     */
+    var compatibilityModeForUserInfo: Boolean = false
+
+    /**
      * The config that whether to enable the function of replying message.
      */
     var enableReplyMessage: Boolean = true
@@ -60,12 +69,12 @@ class ChatUIKitConfig {
     /**
      * The config that whether to show unread notification in chat activity.
      * If true:
-     * 1、When the message item is not visible, the message read ack will not be sent.
-     * 2、If click the unread notification view, the channel ack will be sent.
-     * 3、if it is not on the bottom of the chat list, sending new message will send the channel ack.
+     * 1、When the message item is not visible, the message read receipt will not be sent.
+     * 2、If click the unread notification view, the conversation unread count will be cleared.
+     * 3、if it is not on the bottom of the chat list, sending new message will clear the conversation unread count.
      * If false:
-     * 1、When you receive the new message, the message read ack will be sent.
-     * 2、Only when you enter the chat activity, the channel ack will be sent.
+     * 1、When you receive the new message, the message read receipt will be sent.
+     * 2、Only when you enter the chat activity, the conversation unread count will be cleared.
      */
     var showUnreadNotificationInChat: Boolean = true
 

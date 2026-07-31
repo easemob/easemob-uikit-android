@@ -5,7 +5,7 @@ import com.hyphenate.easeui.common.ChatError
 import com.hyphenate.easeui.common.ChatException
 import com.hyphenate.easeui.common.ChatGroup
 import com.hyphenate.easeui.common.ChatGroupManager
-import com.hyphenate.easeui.common.ChatGroupOptions
+import com.hyphenate.easeui.common.ChatGroupConfigs
 import com.hyphenate.easeui.common.impl.CallbackImpl
 import com.hyphenate.easeui.common.impl.ValueCallbackImpl
 import kotlin.coroutines.resume
@@ -15,21 +15,23 @@ import kotlin.coroutines.suspendCoroutine
 /**
  * Suspend method for [ChatGroupManager.createGroup()]
  * @param groupName
+ * @param avatar
  * @param desc
  * @param members
  * @param reason
- * @param options
+ * @param configs
  * @return ChatGroup
  */
 suspend fun ChatGroupManager.createChatGroup(
     groupName:String,
+    avatar:String,
     desc:String,
     members:MutableList<String>,
     reason:String,
-    options:ChatGroupOptions,
+    configs:ChatGroupConfigs,
 ):ChatGroup{
     return suspendCoroutine{ continuation ->
-        asyncCreateGroup(groupName,desc,members.toTypedArray(),reason,options,ValueCallbackImpl(
+        asyncCreateGroup(groupName,avatar,desc,members.toTypedArray(),reason,configs,ValueCallbackImpl(
             onSuccess = {
                 continuation.resume(it)
             },
@@ -67,24 +69,6 @@ suspend fun ChatGroupManager.fetchChatGroupMembers(
 ):ChatCursorResult<String>{
     return suspendCoroutine{ continuation ->
         asyncFetchGroupMembers(groupId,cursor,pageSize, ValueCallbackImpl(
-            onSuccess = {
-                continuation.resume(it)
-            },
-            onError = {code,message-> continuation.resumeWithException(ChatException(code, message)) }
-        ))
-    }
-}
-
-
-/**
- * Suspend method for [ChatGroupManager.fetchJoinedGroupsFromServer()]
- * @return MutableList<ChatGroup>
- */
-suspend fun ChatGroupManager.fetchJoinedGroupsFromServer(
-    page:Int,pageSize: Int,needMemberCount:Boolean,needRole:Boolean
-):MutableList<ChatGroup>{
-    return suspendCoroutine{ continuation ->
-        asyncGetJoinedGroupsFromServer(page,pageSize,needMemberCount,needRole,ValueCallbackImpl(
             onSuccess = {
                 continuation.resume(it)
             },

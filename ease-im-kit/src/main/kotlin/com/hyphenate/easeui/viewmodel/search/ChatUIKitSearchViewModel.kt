@@ -79,7 +79,7 @@ open class ChatUIKitSearchViewModel(
                 if (conversationId.isEmpty()){
                     emit(repository.searchMessage(keywords,timeStamp,maxSearchCount,from,direction,chatScope))
                 }else{
-                    emit(repository.searchMessageByConversation(conversationId,keywords,timeStamp,maxSearchCount,from,direction,ChatSearchScope.CONTENT))
+                    emit(repository.searchMessageByConversation(conversationId,keywords,timeStamp,maxSearchCount,from,direction,chatScope))
                 }
             }
                 .stateIn(viewModelScope, SharingStarted.WhileSubscribed(stopTimeoutMillis), null)

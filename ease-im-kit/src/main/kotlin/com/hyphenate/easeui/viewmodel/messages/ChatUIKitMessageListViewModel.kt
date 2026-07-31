@@ -2,7 +2,6 @@ package com.hyphenate.easeui.viewmodel.messages
 
 import android.util.Log
 import androidx.lifecycle.viewModelScope
-import com.hyphenate.easeui.ChatUIKitClient
 import com.hyphenate.easeui.common.ChatClient
 import com.hyphenate.easeui.viewmodel.ChatUIKitBaseViewModel
 import com.hyphenate.easeui.common.ChatConversation
@@ -70,10 +69,6 @@ open class ChatUIKitMessageListViewModel(
                 return@launch
             }
             _conversation?.run {
-                if (ChatUIKitClient.getConfig()?.chatConfig?.showUnreadNotificationInChat == false) {
-                    // Mark all messages as read. App may be crashed, so mark all messages as read when get all messages.
-                    markAllMessagesAsRead()
-                }
                 view?.getAllMessagesSuccess(allMessages)
             }
         }

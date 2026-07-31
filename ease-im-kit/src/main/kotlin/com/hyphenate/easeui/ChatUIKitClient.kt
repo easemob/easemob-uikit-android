@@ -2,6 +2,8 @@ package com.hyphenate.easeui
 
 import android.content.Context
 import com.hyphenate.easeui.common.ChatOptions
+import com.hyphenate.easeui.common.ChatClient
+import com.hyphenate.easeui.common.extensions.isSilentWithLegacyFallback
 import com.hyphenate.easeui.common.ChatPresence
 import com.hyphenate.easeui.common.ChatPresenceListener
 import com.hyphenate.easeui.common.ChatThreadChangeListener
@@ -248,7 +250,8 @@ object ChatUIKitClient {
     }
 
     fun checkMutedConversationList(userId:String):Boolean{
-        return getCache().getMutedConversationList().containsKey(userId)
+        return ChatClient.getInstance().chatManager().getConversation(userId)
+            .isSilentWithLegacyFallback(userId)
     }
 
     /**

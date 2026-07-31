@@ -4,12 +4,12 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.util.LruCache
 import com.hyphenate.easeui.common.ChatClient
+import com.hyphenate.easeui.common.ChatCallback
 import com.hyphenate.easeui.common.ChatConversation
 import com.hyphenate.easeui.common.ChatCursorResult
-import com.hyphenate.easeui.common.ChatGroupReadAck
+import com.hyphenate.easeui.common.ChatGroupReadReceipt
 import com.hyphenate.easeui.common.ChatLog
 import com.hyphenate.easeui.common.ChatMessage
-import com.hyphenate.easeui.common.ChatTextMessageBody
 import com.hyphenate.easeui.common.ChatType
 import com.hyphenate.easeui.common.ChatValueCallback
 import java.lang.ref.WeakReference
@@ -24,12 +24,12 @@ class ChatUIKitDingMessageHelper internal constructor(context: Context) {
     /**
      * To notify if a ding-type msg acked users updated.
      */
-    interface IAckUserUpdateListener {
+    interface IReadReceiptUserUpdateListener {
         fun onUpdate(list: List<String>?)
     }
 
-    // Map<msgId, IAckUserUpdateListener>
-    private val listenerMap: MutableMap<String, WeakReference<IAckUserUpdateListener>>
+    // Map<msgId, IReadReceiptUserUpdateListener>
+    private val listenerMap: MutableMap<String, WeakReference<IReadReceiptUserUpdateListener>>
 
     // Package level interface, for test.
     // LruCache<conversationId, LruCache<msgId, List<username>>>
@@ -47,7 +47,7 @@ class ChatUIKitDingMessageHelper internal constructor(context: Context) {
      * @param msg
      * @param listener Nullable, if this is null, will remove this msg's listener from listener map.
      */
-    fun setUserUpdateListener(msg: ChatMessage, listener: IAckUserUpdateListener?) {
+    fun setUserUpdateListener(msg: ChatMessage, listener: IReadReceiptUserUpdateListener?) {
         if (!validateMessage(msg)) {
             return
         }
@@ -66,7 +66,7 @@ class ChatUIKitDingMessageHelper internal constructor(context: Context) {
      * @return
      */
     fun isDingMessage(message: ChatMessage): Boolean {
-        return message.isNeedGroupAck
+        return message.isNeedReadReceipt
     }
 
     /**
@@ -74,15 +74,15 @@ class ChatUIKitDingMessageHelper internal constructor(context: Context) {
      */
     fun createDingMessage(to: String?, content: String?): ChatMessage {
         val message = ChatMessage.createTextSendMessage(content, to)
-        message.setIsNeedGroupAck(true)
+        message.setIsNeedReadReceipt(true)
         return message
     }
 
-    fun sendAckMessage(message: ChatMessage) {
+    fun sendReadReceipt(message: ChatMessage) {
         if (!validateMessage(message)) {
             return
         }
-        if (message.isAcked) {
+        if (message.isPeerRead) {
             return
         }
 
@@ -91,33 +91,37 @@ class ChatUIKitDingMessageHelper internal constructor(context: Context) {
             return
         }
         try {
-            if (message.isNeedGroupAck && !message.isUnread) {
-                val to = message.conversationId() // do not user getFrom() here
-                val msgId = message.msgId
+            if (message.isNeedReadReceipt && message.isRead) {
                 ChatClient.getInstance().chatManager()
-                    .ackGroupMessageRead(to, msgId, (message.body as ChatTextMessageBody).message)
-                message.isUnread = false
-                ChatLog.i(TAG, "Send the group ack cmd-type message.")
+                    .asyncSendMessageReadReceipts(listOf(message), object : ChatCallback {
+                        override fun onSuccess() {
+                            ChatLog.i(TAG, "Send the group read receipt message success.")
+                        }
+
+                        override fun onError(code: Int, errorMsg: String?) {
+                            ChatLog.d(TAG, "Send the group read receipt message fail: $code")
+                        }
+                    })
             }
         } catch (e: Exception) {
             ChatLog.d(TAG, e.message)
         }
     }
 
-    fun fetchGroupReadAck(msg: ChatMessage) {
+    fun fetchGroupMessageReadReceipts(msg: ChatMessage) {
         // fetch from server
         val msgId = msg.msgId
-        ChatClient.getInstance().chatManager().asyncFetchGroupReadAcks(
+        ChatClient.getInstance().chatManager().asyncFetchGroupMessageReadReceipts(
             msgId,
             20,
             "",
-            object : ChatValueCallback<ChatCursorResult<ChatGroupReadAck>> {
-                override fun onSuccess(value: ChatCursorResult<ChatGroupReadAck>) {
-                    ChatLog.d(TAG, "asyncFetchGroupReadAcks success")
+            object : ChatValueCallback<ChatCursorResult<ChatGroupReadReceipt>> {
+                override fun onSuccess(value: ChatCursorResult<ChatGroupReadReceipt>) {
+                    ChatLog.d(TAG, "asyncFetchGroupMessageReadReceipts success")
                     if (value.data != null && value.data.size > 0) {
                         val acks = value.data
                         for (c in acks) {
-                            handleGroupReadAck(c)
+                            handleGroupReadReceipt(c)
                         }
                     } else {
                         ChatLog.d(TAG, "no data")
@@ -125,21 +129,21 @@ class ChatUIKitDingMessageHelper internal constructor(context: Context) {
                 }
 
                 override fun onError(error: Int, errorMsg: String) {
-                    ChatLog.d(TAG, "asyncFetchGroupReadAcks fail: $error")
+                    ChatLog.d(TAG, "asyncFetchGroupMessageReadReceipts fail: $error")
                 }
             })
     }
 
     /**
-     * To handle ding-type ack msg.
+     * To handle ding-type read receipt msg.
      * Need store native for reload when app restart.
      *
-     * @param ack The ding-type message.
+     * @param ack The ding-type message read receipt.
      */
-    fun handleGroupReadAck(ack: ChatGroupReadAck?) {
+    fun handleGroupReadReceipt(ack: ChatGroupReadReceipt?) {
         if (ack == null) return
         ChatLog.d(TAG, "handle group read ack: " + ack.msgId)
-        val username = ack.from
+        val username = ack.from?.userId ?: return
         val msgId = ack.msgId
         val conversationId = ChatClient.getInstance().chatManager().getMessage(msgId).conversationId()
 
@@ -223,7 +227,7 @@ class ChatUIKitDingMessageHelper internal constructor(context: Context) {
     }
 
     // Package level interface, for test.
-    fun getListenerMap(): Map<String, WeakReference<IAckUserUpdateListener>> {
+    fun getListenerMap(): Map<String, WeakReference<IReadReceiptUserUpdateListener>> {
         return listenerMap
     }
 

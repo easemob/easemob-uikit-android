@@ -45,7 +45,18 @@ open class ChatUIKitProfile(
          * @return The group member information.
          */
         fun getGroupMember(groupId: String?, userId: String?): ChatUIKitProfile? {
-            return ChatUIKitClient.getUserProvider()?.getSyncUser(userId)
+            if (userId.isNullOrEmpty()) return null
+            ChatUIKitClient.getUserProvider()?.getSyncUser(userId)
+            val cache = ChatUIKitClient.getCache()
+            val profile = cache.getUser(userId) ?: ChatUIKitProfile(userId)
+            val nameCard = cache.getGroupNameCard(groupId, userId)?.nameCard
+                ?.takeIf { it.isNotEmpty() }
+            return ChatUIKitProfile(
+                id = profile.id,
+                name = profile.name,
+                avatar = profile.avatar,
+                remark = nameCard ?: profile.remark,
+            )
         }
     }
 }

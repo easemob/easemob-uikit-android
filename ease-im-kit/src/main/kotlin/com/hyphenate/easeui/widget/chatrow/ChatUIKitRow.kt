@@ -208,7 +208,7 @@ abstract class ChatUIKitRow @JvmOverloads constructor(
                 // update acked status
                 ackedView?.let {
                     it.visibility = View.INVISIBLE
-                    if (isSuccess() && ChatClient.getInstance().options.requireAck && isAcked) {
+                    if (isSuccess() && isPeerRead) {
                         deliveredView?.visibility = View.INVISIBLE
                         it.visibility = VISIBLE
                     }

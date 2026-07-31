@@ -68,7 +68,6 @@
     <string name="uikit_action_recall">Recall</string>
     <string name="uikit_action_delete">Delete</string>
     <string name="uikit_action_edit">Edit</string>
-    <string name="uikit_action_report">Report</string>
     <string name="uikit_action_translation">Translate</string>
     <string name="uikit_action_hide_translation">Hide translation</string>
     <string name="uikit_action_multi_select">Select</string>
@@ -251,13 +250,6 @@
     <!--Group Mention-->
     <string name="uikit_group_mention_title">\@&#160;Mention</string>
     <string name="uikit_group_mention_all">All</string>
-
-    <!--report-->
-    <string name="uikit_report_title">Message reporting</string>
-    <string name="uikit_report_reason">Reason for reporting</string>
-    <string name="uikit_report_bottom_left">Cancel</string>
-    <string name="uikit_report_bottom_right">Report</string>
-    <string name="uikit_report_success">Reported successfully</string>
 
     <!-- notifier -->
     <string name="uikit_notifier_channel_name">hyphenate chatuidemo message default channel.</string>

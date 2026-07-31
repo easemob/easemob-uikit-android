@@ -13,8 +13,7 @@ import com.hyphenate.easeui.base.ChatUIKitBaseActivity
 import com.hyphenate.easeui.common.ChatClient
 import com.hyphenate.easeui.common.ChatGroup
 import com.hyphenate.easeui.common.enums.ChatUIKitListViewType
-import com.hyphenate.easeui.common.ChatGroupOptions
-import com.hyphenate.easeui.common.ChatGroupStyle
+import com.hyphenate.easeui.common.ChatGroupConfigs
 import com.hyphenate.easeui.common.ChatLog
 import com.hyphenate.easeui.common.extensions.createNewGroupMessage
 import com.hyphenate.easeui.common.extensions.hasRoute
@@ -94,14 +93,20 @@ open class ChatUIKitCreateGroupActivity:ChatUIKitBaseActivity<UikitActivityCreat
     }
 
     open fun createGroup(){
-        val chatGroupOptions = ChatGroupOptions()
-        chatGroupOptions.style = ChatGroupStyle.EMGroupStylePrivateMemberCanInvite
+        // Private group, members can invite others to join.
+        val configs = ChatGroupConfigs().apply {
+            isPublic = false
+            allowInvites = true
+            joinApprovalRequired = false
+            inviteNeedConfirm = false
+        }
         groupViewModel?.createGroup(
             groupName = getGroupNameRule(),
+            avatar = "",
             desc = "",
             groupUserList,
             reason = "",
-            options = chatGroupOptions
+            configs = configs
         )
     }
 

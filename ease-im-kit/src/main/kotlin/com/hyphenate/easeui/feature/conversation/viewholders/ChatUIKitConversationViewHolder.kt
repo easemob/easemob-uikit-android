@@ -1,7 +1,5 @@
 package com.hyphenate.easeui.feature.conversation.viewholders
 
-import android.R.attr.name
-import android.R.id.message
 import android.graphics.drawable.Drawable
 import android.view.View
 import androidx.viewbinding.ViewBinding
@@ -14,9 +12,8 @@ import com.hyphenate.easeui.common.ChatMessageDirection
 import com.hyphenate.easeui.common.ChatMessageStatus
 import com.hyphenate.easeui.common.ChatType
 import com.hyphenate.easeui.common.ChatUIKitConstant
-import com.hyphenate.easeui.common.extensions.getChatroomName
 import com.hyphenate.easeui.common.extensions.getEmojiText
-import com.hyphenate.easeui.common.extensions.getGroupNameFromId
+import com.hyphenate.easeui.common.extensions.getDisplayInfo
 import com.hyphenate.easeui.common.extensions.getMessageDigest
 import com.hyphenate.easeui.common.extensions.getTextHeight
 import com.hyphenate.easeui.common.extensions.getDateFormat
@@ -32,8 +29,6 @@ import com.hyphenate.easeui.feature.conversation.config.showUnreadCount
 import com.hyphenate.easeui.model.ChatUIKitConversation
 import com.hyphenate.easeui.model.isChatRoom
 import com.hyphenate.easeui.model.isGroupChat
-import com.hyphenate.easeui.provider.getSyncProfile
-import com.hyphenate.easeui.provider.getSyncUser
 
 class ChatUIKitConversationViewHolder(
     private val viewBinding: UikitItemConversationListBinding,
@@ -74,39 +69,21 @@ class ChatUIKitConversationViewHolder(
                     itemView.background = bgDrawable
                 }
                 // Set conversation avatar and name.
-                var placeholderRes = R.drawable.uikit_default_avatar
-                if (item.isGroupChat()) {
-                    placeholderRes = R.drawable.uikit_default_group_avatar
+                val displayInfo = item.getDisplayInfo()
+                val placeholderRes = when {
+                    item.isGroupChat() -> R.drawable.uikit_default_group_avatar
+                    item.isChatRoom() -> R.drawable.ease_default_chatroom_avatar
+                    else -> R.drawable.uikit_default_avatar
+                }
+                name.text = displayInfo.name
+                if (displayInfo.avatar.isNullOrEmpty()) {
                     avatar.setImageResource(placeholderRes)
-                    name.text = item.conversationId.getGroupNameFromId()
-                    // Set custom data provided by user
-                    ChatUIKitClient.getGroupProfileProvider()?.getSyncProfile(item.conversationId)?.let { profile ->
-                        avatar.load(profile.avatar) {
-                            placeholder(placeholderRes)
-                            error(placeholderRes)
-                        }
-                        if (profile.name.isNullOrEmpty()) {
-                            name.text = profile.name
-                        }
-                    }
-                } else if (item.isChatRoom()) {
-                    placeholderRes = R.drawable.ease_default_chatroom_avatar
-                    avatar.setImageResource(placeholderRes)
-                    name.text = item.conversationId.getChatroomName()
                 } else {
-                    name.text = item.conversationId
-                    avatar.setImageResource(placeholderRes)
-                    ChatUIKitClient.getUserProvider()?.getSyncUser(item.conversationId)?.let { user ->
-                        avatar.load(user.avatar) {
-                            placeholder(placeholderRes)
-                            error(placeholderRes)
-                        }
-                        name.text = user.getRemarkOrName()
+                    avatar.load(displayInfo.avatar) {
+                        placeholder(placeholderRes)
+                        error(placeholderRes)
                     }
                 }
-
-
-
 
                 // Set @ message in group chat
                 if (item.isGroupChat()) {

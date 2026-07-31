@@ -181,30 +181,4 @@
         <item>.docx</item>
     </array>
 
-    <string-array name="report_tag">
-        <item>tag0</item>
-        <item>tag1</item>
-        <item>tag2</item>
-        <item>tag3</item>
-        <item>tag4</item>
-        <item>tag5</item>
-        <item>tag6</item>
-        <item>tag7</item>
-        <item>tag8</item>
-        <item>tag9</item>
-    </string-array>
-
-    <string-array name="report_reason">
-        <item>Suspected fraud information</item>
-        <item>Unwanted commercial content or spam</item>
-        <item>Pornographic or sexually explicit content</item>
-        <item>Child abuse</item>
-        <item>Hate speech or violent content</item>
-        <item>Terrorism</item>
-        <item>Harassment or bullying</item>
-        <item>Suicide or self-harm</item>
-        <item>Misleading information</item>
-        <item>Others</item>
-    </string-array>
-
 </resources>

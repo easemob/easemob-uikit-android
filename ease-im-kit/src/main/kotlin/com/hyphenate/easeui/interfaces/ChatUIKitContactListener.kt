@@ -13,8 +13,6 @@ open class ChatUIKitContactListener: ChatContactListener {
     override fun onFriendRequestAccepted(username: String?) {}
 
     override fun onFriendRequestDeclined(username: String?) {}
-    override fun onContactSyncStart() {}
-    override fun onContactSyncFinishWithError(errorCode: Int, errorMsg: String?) {}
 
     override fun onContactInfoUpdate(contact: EMContact?) {}
 }

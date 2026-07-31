@@ -1,6 +1,7 @@
 package com.hyphenate.easeui.provider
 
 import com.hyphenate.easeui.ChatUIKitClient
+import com.hyphenate.easeui.common.ChatClient
 import com.hyphenate.easeui.common.ChatConversationType
 import com.hyphenate.easeui.common.impl.OnValueSuccess
 import com.hyphenate.easeui.model.ChatUIKitGroupProfile
@@ -39,11 +40,18 @@ suspend fun ChatUIKitGroupProfileProvider.fetchProfilesBySuspend(groupIds: List<
 
 /**
  * Get profile by cache or sync method provided by developer.
+ * Falls back to the SDK local group so that the group avatar and name
+ * synced by the SDK can be used when the developer provides nothing.
  */
 fun ChatUIKitGroupProfileProvider.getSyncProfile(id: String?): ChatUIKitGroupProfile? {
     var profile = ChatUIKitClient.getCache().getGroup(id)
     if (profile == null) {
         profile = getGroup(id)
+        if (profile == null && !id.isNullOrEmpty()) {
+            profile = ChatClient.getInstance().groupManager().getGroup(id)?.let {
+                ChatUIKitGroupProfile(it.groupId, it.groupName, it.groupAvatar)
+            }
+        }
         if (profile != null && !id.isNullOrEmpty()) {
             ChatUIKitClient.getCache().insertGroup(id, profile)
         }

@@ -6,7 +6,6 @@ import android.widget.Toast
 import com.hyphenate.easeui.R
 import com.hyphenate.easeui.common.ChatClient
 import com.hyphenate.easeui.common.ChatDownloadStatus
-import com.hyphenate.easeui.common.ChatException
 import com.hyphenate.easeui.common.ChatMessage
 import com.hyphenate.easeui.common.ChatMessageDirection
 import com.hyphenate.easeui.common.ChatMessageStatus
@@ -114,13 +113,9 @@ class ChatUIKitVoiceViewHolder(itemView: View) : ChatUIKitRowViewHolder(itemView
 
     private fun ackMessage(message: ChatMessage) {
         val chatType = message.chatType
-        if (!message.isAcked && chatType === ChatType.Chat) {
-            try {
-                ChatClient.getInstance().chatManager()
-                    .ackMessageRead(message.from, message.msgId)
-            } catch (e: ChatException) {
-                e.printStackTrace()
-            }
+        if (!message.isPeerRead && chatType === ChatType.Chat) {
+            ChatClient.getInstance().chatManager()
+                .asyncSendMessageReadReceipts(listOf(message), null)
         }
         if (!message.isListened) {
             ChatClient.getInstance().chatManager().setVoiceMessageListened(message)

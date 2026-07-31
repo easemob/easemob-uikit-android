@@ -13,11 +13,8 @@ import com.hyphenate.easeui.common.ChatSilentModeParam
 import com.hyphenate.easeui.common.ChatSilentModelType
 import com.hyphenate.easeui.common.ChatUIKitConstant
 import com.hyphenate.easeui.common.extensions.parse
-import com.hyphenate.easeui.common.helper.ChatUIKitPreferenceManager
 import com.hyphenate.easeui.common.suspends.clearSilentModeForConversation
 import com.hyphenate.easeui.common.suspends.deleteConversationFromServer
-import com.hyphenate.easeui.common.suspends.fetchConversationsFromServer
-import com.hyphenate.easeui.common.suspends.getSilentModeOfConversations
 import com.hyphenate.easeui.common.suspends.pinConversation
 import com.hyphenate.easeui.common.suspends.setSilentModeForConversation
 import com.hyphenate.easeui.model.ChatUIKitConversation
@@ -35,57 +32,23 @@ class ChatUIKitConversationRepository(
 ) {
     companion object {
         private const val TAG = "ConversationRep"
-        private const val LIMIT = 50
     }
 
     /**
-     * Load conversation list from local db or server.
+     * Load conversation list from local db.
+     * Conversations are synced automatically after login,
+     * controlled by [com.hyphenate.chat.EMOptions.setDataSyncType].
      */
     suspend fun loadData(): List<ChatUIKitConversation> =
         withContext(Dispatchers.IO) {
-            val hasLoaded: Boolean = ChatUIKitPreferenceManager.getInstance().isLoadedConversationsFromServer()
-            if (hasLoaded) {
-                if (ChatUIKitClient.DEBUG) {
-                    ChatLog.d(TAG, "loadData from local db")
+            chatManager.allConversationsBySort
+                // Filter system message and empty conversations.
+                ?.filter {
+                    it.conversationId() != ChatUIKitConstant.DEFAULT_SYSTEM_MESSAGE_ID
                 }
-                chatManager.allConversationsBySort
-                    // Filter system message and empty conversations.
-                    ?.filter {
-                        it.conversationId() != ChatUIKitConstant.DEFAULT_SYSTEM_MESSAGE_ID
-                    }
-                    ?.map {
-                        it.parse()
-                    } ?: listOf()
-            }else {
-                if (ChatUIKitClient.DEBUG) {
-                    ChatLog.d(TAG, "loadData from server")
-                }
-                var cursor: String? = null
-                do {
-                    val result = chatManager.fetchConversationsFromServer(LIMIT, cursor)
-                    val conversations = result.data
-
-                    try {
-                        val silentResult = pushManager.getSilentModeOfConversations(conversations)
-                        conversations.iterator().forEach {
-                            val conversation = it.parse()
-                            conversation.setSilent(silentResult[conversation.conversationId]?.isConversationRemindTypeEnabled ?: false)
-                        }
-                    } catch (e: Exception) {
-                        ChatLog.e(TAG, "getSilentModeOfConversations error: ${e.message}")
-                    }
-                    cursor = result.cursor
-                }while (!cursor.isNullOrEmpty())
-                ChatUIKitPreferenceManager.getInstance().setLoadedConversationsFromServer(true)
-                chatManager.allConversationsBySort
-                    // Filter system message and empty conversations.
-                    ?.filter {
-                        it.conversationId() != ChatUIKitConstant.DEFAULT_SYSTEM_MESSAGE_ID
-                    }
-                    ?.map {
-                        it.parse()
-                    } ?: listOf()
-            }
+                ?.map {
+                    it.parse()
+                } ?: listOf()
         }
 
     /**
@@ -104,8 +67,8 @@ class ChatUIKitConversationRepository(
      */
     suspend fun makeConversionRead(conversation: ChatUIKitConversation) =
         withContext(Dispatchers.IO) {
-            conversation.run {
-                chatConversation()?.markAllMessagesAsRead()
+            conversation.chatConversation()?.conversationId()?.let { conversationId ->
+                chatManager.asyncClearConversationUnreadMessageCount(conversationId, null)
             }
         }
 

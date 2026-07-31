@@ -8,10 +8,25 @@ import com.hyphenate.easeui.model.ChatUIKitProfile
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
+internal data class ChatUIKitGroupNameCard(
+    val nameCard: String?,
+    val timestamp: Long,
+)
+
+private data class GroupMemberKey(
+    val groupId: String,
+    val userId: String,
+)
+
 class ChatUIKitCache {
+    // Cache profiles supplied by the app or its user profile provider.
     private val userMap: ConcurrentMap<String, ChatUIKitProfile> = ConcurrentHashMap()
+    // Cache profiles synchronized by the SDK. App supplied fields take priority when reading.
+    private val sdkUserMap: ConcurrentMap<String, ChatUIKitProfile> = ConcurrentHashMap()
     // Cache the group info. The key is the groupId, the value is the group info.
     private val groupMap: ConcurrentMap<String, ChatUIKitGroupProfile> = ConcurrentHashMap()
+    private val groupNameCardMap =
+        ConcurrentHashMap<GroupMemberKey, ChatUIKitGroupNameCard>()
     // Cache the userinfo parsed by message ext. The key is the userId, the value is the userinfo.
     private val messageUserMap: ConcurrentMap<String, ChatUIKitProfile> = ConcurrentHashMap()
     private val mutedConvMap: MutableMap<String, Long> = HashMap()
@@ -35,6 +50,26 @@ class ChatUIKitCache {
         userMap[user.id] = user
     }
 
+    internal fun getProviderUser(userId: String?): ChatUIKitProfile? {
+        if (userId.isNullOrEmpty()) return null
+        return userMap[userId]
+    }
+
+    internal fun getSdkUser(userId: String?): ChatUIKitProfile? {
+        if (userId.isNullOrEmpty()) return null
+        return sdkUserMap[userId]
+    }
+
+    internal fun insertSdkUser(user: ChatUIKitProfile) {
+        sdkUserMap.compute(user.id) { _, cached ->
+            mergeProfiles(user.id, user, cached)
+        }
+    }
+
+    internal fun updateSdkUsers(users: List<ChatUIKitProfile>) {
+        users.forEach(::insertSdkUser)
+    }
+
     /**
      * Insert or update the group info to the cache.
      * @param groupId The group id.
@@ -52,7 +87,29 @@ class ChatUIKitCache {
         if (userId.isNullOrEmpty()) {
             return null
         }
-        return userMap[userId]
+        return mergeProfiles(userId, userMap[userId], sdkUserMap[userId])
+    }
+
+    internal fun insertGroupNameCard(
+        groupId: String?,
+        userId: String?,
+        nameCard: String?,
+        timestamp: Long,
+    ) {
+        if (groupId.isNullOrEmpty() || userId.isNullOrEmpty()) return
+        val key = GroupMemberKey(groupId, userId)
+        groupNameCardMap.compute(key) { _, cached ->
+            if (cached == null || timestamp >= cached.timestamp) {
+                ChatUIKitGroupNameCard(nameCard, timestamp)
+            } else {
+                cached
+            }
+        }
+    }
+
+    internal fun getGroupNameCard(groupId: String?, userId: String?): ChatUIKitGroupNameCard? {
+        if (groupId.isNullOrEmpty() || userId.isNullOrEmpty()) return null
+        return groupNameCardMap[GroupMemberKey(groupId, userId)]
     }
 
     /**
@@ -72,10 +129,9 @@ class ChatUIKitCache {
      */
     @Synchronized
     fun insertMessageUser(userId: String, profile: ChatUIKitProfile) {
-        if (messageUserMap.containsKey(userId)) {
-            if (messageUserMap[userId]!!.getTimestamp() < profile.getTimestamp()) {
-                return
-            }
+        val cached = messageUserMap[userId]
+        if (cached != null && cached.getTimestamp() > profile.getTimestamp()) {
+            return
         }
         messageUserMap[userId] = profile
     }
@@ -117,14 +173,22 @@ class ChatUIKitCache {
     fun clear(type: ChatUIKitCacheType?) {
         if (type == null || type == ChatUIKitCacheType.ALL) {
             userMap.clear()
+            sdkUserMap.clear()
             groupMap.clear()
+            groupNameCardMap.clear()
             messageUserMap.clear()
             mutedConvMap.clear()
             previewMap.clear()
         } else {
             when (type) {
-                ChatUIKitCacheType.CONTACT -> userMap.clear()
-                ChatUIKitCacheType.CONVERSATION_INFO -> groupMap.clear()
+                ChatUIKitCacheType.CONTACT -> {
+                    userMap.clear()
+                    sdkUserMap.clear()
+                }
+                ChatUIKitCacheType.CONVERSATION_INFO -> {
+                    groupMap.clear()
+                    groupNameCardMap.clear()
+                }
                 else -> {
                 }
             }
@@ -146,6 +210,24 @@ class ChatUIKitCache {
             }
         }
     }
+
+    private fun mergeProfiles(
+        userId: String,
+        preferred: ChatUIKitProfile?,
+        fallback: ChatUIKitProfile?,
+    ): ChatUIKitProfile? {
+        if (preferred == null && fallback == null) return null
+        return ChatUIKitProfile(
+            id = userId,
+            name = preferred?.name.nonEmptyOrNull() ?: fallback?.name,
+            avatar = preferred?.avatar.nonEmptyOrNull() ?: fallback?.avatar,
+            remark = preferred?.remark.nonEmptyOrNull() ?: fallback?.remark,
+        ).apply {
+            setTimestamp(maxOf(preferred?.getTimestamp() ?: 0L, fallback?.getTimestamp() ?: 0L))
+        }
+    }
+
+    private fun String?.nonEmptyOrNull(): String? = this?.takeIf { it.isNotEmpty() }
 
     fun saveUrlPreviewInfo(msgId:String?,bean:ChatUIKitPreview){
         msgId?.let {

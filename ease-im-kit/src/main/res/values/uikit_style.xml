@@ -119,47 +119,6 @@
 
     </style>
 
-    <!-- Report -->
-    <style name="uikit_report_title">
-        <item name="android:textAppearance">@style/Ease.TextAppearance.Title.Medium</item>
-        <item name="android:textColor">@color/ease_color_on_background_low</item>
-        <item name="android:text">@string/uikit_report_title</item>
-    </style>
-
-    <style name="uikit_report_reason">
-        <item name="android:textAppearance">@style/Ease.TextAppearance.Title.Small</item>
-        <item name="android:textColor">@color/ease_color_text_secondary</item>
-        <item name="android:text">@string/uikit_report_reason</item>
-    </style>
-
-    <style name="ease_report_item_tv">
-        <item name="android:textAppearance">@style/Ease.TextAppearance.Body.Large</item>
-        <item name="android:textColor">@color/ease_color_on_background_low</item>
-        <item name="android:maxLines">1</item>
-        <item name="android:ellipsize">end</item>
-    </style>
-
-    <style name="ease_report_item_checkbox">
-        <item name="android:layout_width">20dp</item>
-        <item name="android:layout_height">20dp</item>
-        <item name="android:button">@null</item>
-        <item name="android:background">@drawable/uikit_report_checkbox_bg_selector_style</item>
-    </style>
-
-    <style name="ease_report_left_button">
-        <item name="android:background">@drawable/uikit_dialog_border</item>
-        <item name="android:textAppearance">@style/Ease.TextAppearance.Body.Large</item>
-        <item name="android:textColor">@color/ease_custom_dialog_left_text_color</item>
-        <item name="android:text">@string/uikit_report_bottom_left</item>
-    </style>
-
-    <style name="ease_report_right_button">
-        <item name="android:background">@drawable/uikit_invitation_action_bg</item>
-        <item name="android:textAppearance">@style/Ease.TextAppearance.Body.Large</item>
-        <item name="android:textColor">@color/uikit_selector_change_text_color</item>
-        <item name="android:text">@string/uikit_report_bottom_right</item>
-    </style>
-
     <style name="ease_dialog_left_button">
         <item name="android:background">@drawable/uikit_dialog_border</item>
         <item name="android:textAppearance">@style/Ease.TextAppearance.Body.Large</item>

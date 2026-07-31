@@ -3,6 +3,7 @@ package com.easemob.quickstart
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import com.hyphenate.chat.EMOptions.EMDataSyncType
 import com.easemob.quickstart.databinding.ActivityMainBinding
 import com.hyphenate.easeui.ChatUIKitClient
 import com.hyphenate.easeui.common.ChatLog
@@ -12,15 +13,10 @@ import com.hyphenate.easeui.feature.chat.enums.ChatUIKitType
 import com.hyphenate.easeui.feature.chat.activities.UIKitChatActivity
 import com.hyphenate.easeui.interfaces.ChatUIKitConnectionListener
 import com.hyphenate.easeui.model.ChatUIKitProfile
+import java.util.EnumSet
 
 class MainActivity : AppCompatActivity() {
     private val binding: ActivityMainBinding by lazy { ActivityMainBinding.inflate(layoutInflater) }
-
-    // The chat token used to log in to the Chat server.
-    // In a real app you should obtain this from your own app server (the app server
-    // exchanges the user's credentials for a chat token). Replace the value below with
-    // a real, pre-provisioned chat token for the user.
-    private val chatToken: String = ""
 
     private val connectListener by lazy {
         object : ChatUIKitConnectionListener() {
@@ -52,10 +48,17 @@ class MainActivity : AppCompatActivity() {
         ChatOptions().apply {
             // Set your own appkey here
             this.appKey = appkey
-            // Set not to log in automatically
-            this.autoLogin = false
             // Set whether confirmation of delivery is required by the recipient. Default: false
             this.requireDeliveryAck = true
+            // Enable SDK-managed user information and local data synchronization.
+            setEnableUserInfo(true)
+            setDataSyncType(
+                EnumSet.of(
+                    EMDataSyncType.CONVERSATIONS,
+                    EMDataSyncType.CONTACTS,
+                    EMDataSyncType.JOINED_GROUPS,
+                )
+            )
         }.let {
             ChatUIKitClient.init(applicationContext, it)
         }
@@ -67,18 +70,13 @@ class MainActivity : AppCompatActivity() {
 
     fun login(view: View) {
         val username = binding.etUserId.text.toString().trim()
-        if (username.isEmpty()) {
-            showToast("Username cannot be empty!")
-            ChatLog.e(TAG, "Username cannot be empty!")
+        val chatToken = binding.etToken.text.toString().trim()
+        if (username.isEmpty() || chatToken.isEmpty()) {
+            showToast("Username or chat token cannot be empty!")
+            ChatLog.e(TAG, "Username or chat token cannot be empty!")
             return
         }
-        // Obtain the chat token before logging in. In a real app this comes from your
-        // app server; here we use the pre-provisioned token field.
-        if (chatToken.isEmpty()) {
-            showToast("Chat token cannot be empty!")
-            ChatLog.e(TAG, "Chat token cannot be empty!")
-            return
-        }
+        // Obtain this token from your app server. Do not embed user passwords or tokens.
         if (!ChatUIKitClient.isInited()) {
             showToast("Please init first!")
             ChatLog.e(TAG, "Please init first!")

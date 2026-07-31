@@ -12,7 +12,6 @@ import com.hyphenate.easeui.common.suspends.addToBlackList
 import com.hyphenate.easeui.common.suspends.declineContactInvitation
 import com.hyphenate.easeui.common.suspends.deleteUserFromBlackList
 import com.hyphenate.easeui.common.suspends.fetchBlackListFromServer
-import com.hyphenate.easeui.common.suspends.fetchContactsFromServer
 import com.hyphenate.easeui.common.suspends.removeContact
 import com.hyphenate.easeui.model.ChatUIKitUser
 import com.hyphenate.easeui.provider.fetchUsersBySuspend
@@ -29,12 +28,10 @@ open class ChatUIKitContactListRepository(
     }
 
     /**
-     * Load server contacts.
+     * Load contacts from local. The SDK syncs contacts to the local database
+     * automatically after login (see [com.hyphenate.chat.EMOptions.setDataSyncType]).
      */
-    open suspend fun loadData():List<ChatUIKitUser> =
-        withContext(Dispatchers.IO){
-            chatContactManager.fetchContactsFromServer()
-        }
+    open suspend fun loadData():List<ChatUIKitUser> = loadLocalContact()
 
     /**
      * Load local contacts.

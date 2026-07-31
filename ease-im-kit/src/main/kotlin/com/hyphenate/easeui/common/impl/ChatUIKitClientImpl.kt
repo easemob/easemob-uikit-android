@@ -21,10 +21,12 @@ import com.hyphenate.easeui.common.ChatListenersWrapper
 import com.hyphenate.easeui.common.ChatRoomChangeListener
 import com.hyphenate.easeui.common.ChatThreadChangeListener
 import com.hyphenate.easeui.common.ChatUIKitCache
+import com.hyphenate.easeui.common.ChatUserInfoType
 import com.hyphenate.easeui.common.enums.ChatUIKitCacheType
 import com.hyphenate.easeui.common.extensions.isMainProcess
 import com.hyphenate.easeui.common.helper.ChatUIKitNotifier
 import com.hyphenate.easeui.common.helper.ChatUIKitPreferenceManager
+import com.hyphenate.easeui.common.impl.ValueCallbackImpl
 import com.hyphenate.easeui.interfaces.IChatUIKitClient
 import com.hyphenate.easeui.interfaces.OnEventResultListener
 import com.hyphenate.easeui.model.ChatUIKitGroupProfile
@@ -35,6 +37,9 @@ import com.hyphenate.easeui.provider.ChatUIKitEmojiconInfoProvider
 import com.hyphenate.easeui.provider.ChatUIKitSettingsProvider
 import com.hyphenate.easeui.provider.ChatUIKitUserProfileProvider
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 internal class ChatUIKitClientImpl: IChatUIKitClient {
     private var isInit: AtomicBoolean = AtomicBoolean(false)
@@ -80,8 +85,6 @@ internal class ChatUIKitClientImpl: IChatUIKitClient {
             chatOptions = ChatOptions().apply {
                 // change to need confirm contact invitation
                 acceptInvitationAlways = false
-                // set if need read ack
-                requireAck = true
                 // set if need delivery ack
                 requireDeliveryAck = false
             }
@@ -92,10 +95,6 @@ internal class ChatUIKitClientImpl: IChatUIKitClient {
         ChatClient.getInstance().init(context, chatOptions)
         addChatListenersWrapper()
         isInit.set(true)
-        // If auto login, should init the cache.
-        if (chatOptions.autoLogin && ChatClient.getInstance().isLoggedInBefore) {
-            cache.init()
-        }
         ChatLog.e(TAG, "UIKIt init end")
     }
 
@@ -104,8 +103,37 @@ internal class ChatUIKitClientImpl: IChatUIKitClient {
         ChatClient.getInstance().loginWithToken(user.id, token, CallbackImpl(onSuccess = {
             cache.init()
             cache.insertUser(user)
+            syncOwnUserInfoIfNeeded(user)
             onSuccess.invoke()
         }, onError))
+    }
+
+    /**
+     * Check the local own user attributes after login. If the profile passed by the app
+     * differs from the local one, call updateOwnInfo to sync it to the server.
+     * If no local own user attributes are found, do nothing.
+     */
+    private fun syncOwnUserInfoIfNeeded(user: ChatUIKitProfile) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val local = ChatClient.getInstance().userInfoManager().getUserInfoWithUserId(user.id)
+                    ?: return@launch
+                val name = user.name
+                val avatar = user.avatar
+                if (!name.isNullOrEmpty() && name != local.nickname) {
+                    ChatClient.getInstance().userInfoManager().updateOwnInfoByAttribute(
+                        ChatUserInfoType.NICKNAME, name, ValueCallbackImpl<String>(
+                            onSuccess = {}, onError = { _, _ -> }))
+                }
+                if (!avatar.isNullOrEmpty() && avatar != local.avatarUrl) {
+                    ChatClient.getInstance().userInfoManager().updateOwnInfoByAttribute(
+                        ChatUserInfoType.AVATAR_URL, avatar, ValueCallbackImpl<String>(
+                            onSuccess = {}, onError = { _, _ -> }))
+                }
+            } catch (e: Exception) {
+                ChatLog.e(TAG, "syncOwnUserInfoIfNeeded error: ${e.message}")
+            }
+        }
     }
 
     override fun logout(unbindDeviceToken: Boolean, onSuccess: OnSuccess, onError: OnError) {

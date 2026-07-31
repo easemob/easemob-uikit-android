@@ -30,6 +30,7 @@ import com.hyphenate.easeui.common.ChatUIKitConstant
 import com.hyphenate.easeui.common.bus.ChatUIKitFlowBus
 import com.hyphenate.easeui.common.enums.ChatUIKitFinishReason
 import com.hyphenate.easeui.common.extensions.plus
+import com.hyphenate.easeui.common.extensions.resolveConversationDisplayInfo
 import com.hyphenate.easeui.common.extensions.showToast
 import com.hyphenate.easeui.common.extensions.toUser
 import com.hyphenate.easeui.common.helper.ChatUIKitMenuFilterHelper
@@ -56,7 +57,6 @@ import com.hyphenate.easeui.feature.chat.interfaces.OnModifyMessageListener
 import com.hyphenate.easeui.feature.chat.interfaces.OnMultipleSelectRemoveMsgListener
 import com.hyphenate.easeui.feature.chat.interfaces.OnPeerTypingListener
 import com.hyphenate.easeui.feature.chat.interfaces.OnReactionMessageListener
-import com.hyphenate.easeui.feature.chat.interfaces.OnReportMessageListener
 import com.hyphenate.easeui.feature.chat.interfaces.OnTranslationMessageListener
 import com.hyphenate.easeui.feature.chat.interfaces.OnWillSendMessageListener
 import com.hyphenate.easeui.feature.chat.widgets.ChatUIKitExtendMenu
@@ -75,11 +75,10 @@ import com.hyphenate.easeui.menu.chat.ChatUIKitChatMenuHelper
 import com.hyphenate.easeui.model.ChatUIKitEvent
 import com.hyphenate.easeui.model.ChatUIKitMenuItem
 import com.hyphenate.easeui.model.ChatUIKitUser
-import com.hyphenate.easeui.provider.getSyncProfile
 import com.hyphenate.easeui.provider.getSyncUser
 
 open class UIKitChatFragment: ChatUIKitBaseFragment<UikitFragmentChatBinding>(), OnChatLayoutListener,
-    OnMenuChangeListener, OnWillSendMessageListener, OnModifyMessageListener, OnReportMessageListener,
+    OnMenuChangeListener, OnWillSendMessageListener, OnModifyMessageListener,
     OnChatFinishListener, OnTranslationMessageListener, OnMessageChatThreadClickListener,
     ChatThreadChangeListener,IActivityBackPressed, OnMultipleSelectRemoveMsgListener {
     private var backPressListener: View.OnClickListener? = null
@@ -92,7 +91,6 @@ open class UIKitChatFragment: ChatUIKitBaseFragment<UikitFragmentChatBinding>(),
     private var recordTouchListener: OnChatRecordTouchListener? = null
     private var reactionMessageListener: OnReactionMessageListener? = null
     private var modifyMessageListener: OnModifyMessageListener? = null
-    private var reportMessageListener: OnReportMessageListener? = null
     private var translationMessageListener:OnTranslationMessageListener? = null
     private var messageForwardCallback: OnMessageForwardCallback? = null
     private var sendCombineMessageCallback: OnSendCombineMessageCallback? = null
@@ -257,45 +255,26 @@ open class UIKitChatFragment: ChatUIKitBaseFragment<UikitFragmentChatBinding>(),
             ContextCompat.getColor(mContext, R.color.ease_color_background))
         updateSilent()
         addMenu()
+        updateHeaderProfile(updateName)
+    }
+
+    private fun updateHeaderProfile(updateName: Boolean) {
         chatType.let { type ->
-            when(type) {
-                ChatUIKitType.GROUP_CHAT -> {
-                    ChatUIKitClient.getGroupProfileProvider()
-                        ?.getSyncProfile(conversationId)
-                        ?.let { profile ->
-                            binding?.run {
-                                if (titleBar.getTitle().isNullOrEmpty() || updateName) {
-                                    titleBar.setTitle(profile.name)
-                                }
-                                titleBar.setLogo(
-                                    profile.avatar,
-                                    R.drawable.uikit_default_group_avatar,
-                                    resources.getDimensionPixelSize(R.dimen.ease_title_bar_icon_size)
-                                )
-                            }
-                        } ?: kotlin.run {
-                            setDefaultInfo(type)
-                        }
+            val displayInfo = resolveConversationDisplayInfo(conversationId, type)
+            val placeholderRes = when (type) {
+                ChatUIKitType.GROUP_CHAT -> R.drawable.uikit_default_group_avatar
+                ChatUIKitType.CHATROOM -> R.drawable.ease_default_chatroom_avatar
+                ChatUIKitType.SINGLE_CHAT -> R.drawable.uikit_default_avatar
+            }
+            binding?.run {
+                if (titleBar.getTitle().isNullOrEmpty() || updateName) {
+                    titleBar.setTitle(displayInfo.name)
                 }
-
-                ChatUIKitType.SINGLE_CHAT -> {
-                    ChatUIKitClient.getUserProvider()?.getSyncUser(conversationId)?.let { user ->
-                        binding?.run {
-                            if (titleBar.getTitle().isNullOrEmpty() || updateName) {
-                                titleBar.setTitle(user.getRemarkOrName())
-                            }
-                            titleBar.setLogo(
-                                user.avatar,
-                                R.drawable.uikit_default_avatar,
-                                resources.getDimensionPixelSize(R.dimen.ease_title_bar_icon_size)
-                            )
-                        }
-                    } ?: kotlin.run {
-                        setDefaultInfo(type)
-                    }
-                }
-
-                else -> {}
+                titleBar.setLogo(
+                    displayInfo.avatar,
+                    placeholderRes,
+                    resources.getDimensionPixelSize(R.dimen.ease_title_bar_icon_size),
+                )
             }
         }
     }
@@ -354,28 +333,7 @@ open class UIKitChatFragment: ChatUIKitBaseFragment<UikitFragmentChatBinding>(),
      * Update the group name.
      */
     open fun updateGroupInfo() {
-        ChatClient.getInstance().groupManager().getGroup(conversationId)?.let { group ->
-            binding?.titleBar?.setTitle(group.groupName)
-        }
-    }
-
-    private fun setDefaultInfo(chatType: ChatUIKitType) {
-        if (binding?.titleBar?.getTitle().isNullOrEmpty()) {
-            binding?.titleBar?.setTitle(
-                when(chatType) {
-                    ChatUIKitType.GROUP_CHAT -> ChatClient.getInstance().groupManager().getGroup(conversationId)?.groupName ?: conversationId
-                    ChatUIKitType.CHATROOM -> ChatClient.getInstance().chatroomManager().getChatRoom(conversationId)?.name ?: conversationId
-                    else -> conversationId
-                }
-            )
-        }
-        val defaultRes = when(chatType) {
-            ChatUIKitType.GROUP_CHAT -> R.drawable.uikit_default_group_avatar
-            ChatUIKitType.CHATROOM -> R.drawable.ease_default_chatroom_avatar
-            else -> R.drawable.uikit_default_avatar
-        }
-        binding?.titleBar?.setLogo(defaultRes)
-        binding?.titleBar?.setLogoSize(resources.getDimensionPixelSize(R.dimen.ease_title_bar_icon_size))
+        updateHeaderProfile(updateName = true)
     }
 
     private fun setCustomExtendView() {
@@ -406,7 +364,6 @@ open class UIKitChatFragment: ChatUIKitBaseFragment<UikitFragmentChatBinding>(),
                 it.setOnMenuChangeListener(this)
                 it.setOnWillSendMessageListener(this)
                 it.setOnEditMessageListener(this)
-                it.setOnReportMessageListener(this)
                 it.setOnChatRecordTouchListener(recordTouchListener)
                 it.setOnChatFinishListener(this)
                 it.setOnTranslationMessageListener(this)
@@ -461,6 +418,12 @@ open class UIKitChatFragment: ChatUIKitBaseFragment<UikitFragmentChatBinding>(),
                 binding?.layoutChat?.chatNotificationController?.updateNotificationView()
             }
         }
+        ChatUIKitFlowBus.with<ChatUIKitEvent>(ChatUIKitEvent.EVENT.UPDATE + ChatUIKitEvent.TYPE.CONVERSATION)
+            .register(viewLifecycleOwner) {
+                if (it.isConversationChange && (it.message.isNullOrEmpty() || it.message == conversationId)) {
+                    updateHeaderProfile(updateName = true)
+                }
+            }
         ChatUIKitFlowBus.withStick<ChatUIKitEvent>(ChatUIKitEvent.EVENT.UPDATE.name).register(this) {
             if (it.isSilentChange ) {
                 updateSilent()
@@ -727,11 +690,11 @@ open class UIKitChatFragment: ChatUIKitBaseFragment<UikitFragmentChatBinding>(),
         sendCombineMessageCallback?.onSendCombineError(message, code, errorMsg)
     }
 
-    override fun onSendAckSuccess(message: ChatMessage?) {
+    override fun onSendReadReceiptSuccess(message: ChatMessage?) {
         // do nothing
     }
 
-    override fun onSendAckError(message: ChatMessage?, code: Int, errorMsg: String?) {
+    override fun onSendReadReceiptError(message: ChatMessage?, code: Int, errorMsg: String?) {
         // do nothing
     }
 
@@ -756,17 +719,6 @@ open class UIKitChatFragment: ChatUIKitBaseFragment<UikitFragmentChatBinding>(),
         modifyMessageListener?.onModifyMessageFailure(messageId, code, error)
     }
 
-    override fun onReportMessageSuccess(msgId:String) {
-        reportMessageListener?.onReportMessageSuccess(msgId)
-        ?: kotlin.run {
-            mContext.showToast(R.string.uikit_report_success)
-        }
-    }
-
-    override fun onReportMessageFailure(msgId: String?, code: Int, error: String?) {
-        reportMessageListener?.onReportMessageFailure(msgId,code, error)
-    }
-
     override fun onTranslationMessageSuccess(message: ChatMessage?) {
         translationMessageListener?.onTranslationMessageSuccess(message)
     }
@@ -780,7 +732,7 @@ open class UIKitChatFragment: ChatUIKitBaseFragment<UikitFragmentChatBinding>(),
     }
 
     open fun updateSilent(){
-        val isSilent = ChatUIKitClient.getCache().getMutedConversationList().containsKey(conversationId)
+        val isSilent = conversationId?.let(ChatUIKitClient::checkMutedConversationList) == true
         binding?.run {
             if (isSilent){
                 titleBar.setTitleEndDrawable(R.drawable.uikit_do_not_disturb)
@@ -913,10 +865,6 @@ open class UIKitChatFragment: ChatUIKitBaseFragment<UikitFragmentChatBinding>(),
         this.modifyMessageListener = listener
     }
 
-    private fun setOnReportMessageListener(listener: OnReportMessageListener?){
-        this.reportMessageListener = listener
-    }
-
     private fun setOnTranslationMessageListener(listener: OnTranslationMessageListener?){
         this.translationMessageListener = listener
     }
@@ -951,7 +899,6 @@ open class UIKitChatFragment: ChatUIKitBaseFragment<UikitFragmentChatBinding>(),
         private var reactionMessageListener: OnReactionMessageListener? = null
         protected var customFragment: UIKitChatFragment? = null
         private var modifyMessageListener: OnModifyMessageListener? = null
-        private var reportMessageListener: OnReportMessageListener? = null
         private var translationMessageListener: OnTranslationMessageListener? = null
         private var messageForwardCallback: OnMessageForwardCallback? = null
         private var sendCombineMessageCallback: OnSendCombineMessageCallback? = null
@@ -1243,16 +1190,6 @@ open class UIKitChatFragment: ChatUIKitBaseFragment<UikitFragmentChatBinding>(),
         }
 
         /**
-         * Set the message report listener.
-         * @param listener
-         * @return
-         */
-        fun setOnReportMessageListener(listener: OnReportMessageListener?): Builder {
-            reportMessageListener = listener
-            return this
-        }
-
-        /**
          * Set the message translation listener.
          * @param listener
          * @return
@@ -1400,7 +1337,6 @@ open class UIKitChatFragment: ChatUIKitBaseFragment<UikitFragmentChatBinding>(),
                 it.setCustomAdapter(adapter)
                 it.setOnReactionMessageListener(reactionMessageListener)
                 it.setOnModifyMessageListener(modifyMessageListener)
-                it.setOnReportMessageListener(reportMessageListener)
                 it.setOnTranslationMessageListener(translationMessageListener)
                 it.setOnMessageForwardCallback(messageForwardCallback)
                 it.setOnSendCombineMessageCallback(sendCombineMessageCallback)

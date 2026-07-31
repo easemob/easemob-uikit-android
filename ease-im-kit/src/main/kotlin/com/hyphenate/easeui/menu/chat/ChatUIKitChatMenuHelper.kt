@@ -75,8 +75,6 @@ class ChatUIKitChatMenuHelper: ChatUIKitMenuHelper() {
             if (it.status() == ChatMessageStatus.SUCCESS && it.direct() === ChatMessageDirection.SEND) {
                 findItemVisible(R.id.action_chat_recall, canRecallMessage(it))
             }
-            if (it.status() == ChatMessageStatus.SUCCESS)
-                findItemVisible(R.id.action_chat_report, true)
             if (type == ChatMessageType.TXT) findItemVisible(R.id.action_chat_copy, true)
             if (it.chatType === ChatType.GroupChat && !it.isChatThreadMessage && it.chatThread == null) {
                 findItemVisible(R.id.action_chat_thread, true)
@@ -216,7 +214,6 @@ class ChatUIKitChatMenuHelper: ChatUIKitMenuHelper() {
             R.id.action_chat_recall,
             R.id.action_chat_edit,
             R.id.action_chat_translation,
-            R.id.action_chat_report,
             R.id.action_chat_delete,
         )
         val MENU_TITLES = intArrayOf(
@@ -225,7 +222,6 @@ class ChatUIKitChatMenuHelper: ChatUIKitMenuHelper() {
             R.string.uikit_action_recall,
             R.string.uikit_action_edit,
             R.string.uikit_action_translation,
-            R.string.uikit_action_report,
             R.string.uikit_action_delete,
 
         )
@@ -235,7 +231,6 @@ class ChatUIKitChatMenuHelper: ChatUIKitMenuHelper() {
             R.drawable.uikit_chat_item_menu_unsent,
             R.drawable.uikit_chat_item_menu_edit,
             R.drawable.uikit_chat_item_menu_translation,
-            R.drawable.uikit_chat_item_menu_report,
             R.drawable.uikit_chat_item_menu_delete,
 
         )

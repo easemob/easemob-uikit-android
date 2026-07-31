@@ -30,13 +30,9 @@ class ChatUIKitVideoViewHolder(itemView: View) : ChatUIKitRowViewHolder(itemView
                     return
                 }
             }
-            if (direct() === ChatMessageDirection.RECEIVE && !isAcked && chatType === ChatType.Chat) {
-                try {
-                    ChatClient.getInstance().chatManager()
-                        .ackMessageRead(from, msgId)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
+            if (direct() === ChatMessageDirection.RECEIVE && !isPeerRead && chatType === ChatType.Chat) {
+                ChatClient.getInstance().chatManager()
+                    .asyncSendMessageReadReceipts(listOf(this), null)
             }
             ChatUIKitShowVideoActivity.actionStart(mContext, message)
         }

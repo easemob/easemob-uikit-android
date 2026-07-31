@@ -33,6 +33,7 @@ import com.hyphenate.easeui.common.ChatMessageDirection
 import com.hyphenate.easeui.common.ChatMessagePinInfo
 import com.hyphenate.easeui.common.ChatMessagePinOperation
 import com.hyphenate.easeui.common.ChatMessageReactionChange
+import com.hyphenate.easeui.common.ChatMessageReadReceipt
 import com.hyphenate.easeui.common.ChatMessageType
 import com.hyphenate.easeui.common.ChatRecallMessageInfo
 import com.hyphenate.easeui.common.ChatTextMessageBody
@@ -54,7 +55,6 @@ import com.hyphenate.easeui.feature.chat.controllers.ChatUIKitDialogController
 import com.hyphenate.easeui.feature.chat.controllers.ChatUIKitMessageEditController
 import com.hyphenate.easeui.feature.chat.controllers.ChatUIKitMessageMultipleSelectController
 import com.hyphenate.easeui.feature.chat.controllers.ChatUIKitMessageReplyController
-import com.hyphenate.easeui.feature.chat.controllers.ChatUIKitMessageReportController
 import com.hyphenate.easeui.feature.chat.controllers.ChatUIKitMessageTranslationController
 import com.hyphenate.easeui.feature.chat.controllers.ChatUIKitNotificationController
 import com.hyphenate.easeui.feature.chat.controllers.ChatUIKitPinMessageController
@@ -69,14 +69,13 @@ import com.hyphenate.easeui.feature.chat.interfaces.OnChatErrorListener
 import com.hyphenate.easeui.feature.chat.interfaces.OnChatFinishListener
 import com.hyphenate.easeui.feature.chat.interfaces.OnChatLayoutListener
 import com.hyphenate.easeui.feature.chat.interfaces.OnChatRecordTouchListener
-import com.hyphenate.easeui.feature.chat.interfaces.OnMessageAckSendCallback
+import com.hyphenate.easeui.feature.chat.interfaces.OnMessageReadReceiptSendCallback
 import com.hyphenate.easeui.feature.chat.interfaces.OnMessageListItemClickListener
 import com.hyphenate.easeui.feature.chat.interfaces.OnMessageListTouchListener
 import com.hyphenate.easeui.feature.chat.interfaces.OnModifyMessageListener
 import com.hyphenate.easeui.feature.chat.interfaces.OnMultipleSelectRemoveMsgListener
 import com.hyphenate.easeui.feature.chat.interfaces.OnReactionMessageListener
 import com.hyphenate.easeui.feature.chat.interfaces.OnRecallMessageResultListener
-import com.hyphenate.easeui.feature.chat.interfaces.OnReportMessageListener
 import com.hyphenate.easeui.feature.chat.interfaces.OnTranslationMessageListener
 import com.hyphenate.easeui.feature.chat.reply.interfaces.OnMessageReplyViewClickListener
 import com.hyphenate.easeui.feature.thread.ChatUIKitCreateThreadActivity
@@ -138,13 +137,6 @@ class ChatUIKitLayout @JvmOverloads constructor(
      */
     private val chatMessageEditController: ChatUIKitMessageEditController by lazy {
         ChatUIKitMessageEditController(mContext, this)
-    }
-
-    /**
-     * Use to control the logic of chat message reporting.
-     */
-    private val chatMessageReportController: ChatUIKitMessageReportController by lazy {
-        ChatUIKitMessageReportController(mContext, this)
     }
 
     /**
@@ -247,11 +239,6 @@ class ChatUIKitLayout @JvmOverloads constructor(
     private var modifyMessageListener: OnModifyMessageListener? = null
 
     /**
-     * listener for report message
-     */
-    private var reportMessageListener: OnReportMessageListener? = null
-
-    /**
      * Used to monitor touch events for sending voice
      */
     private var recordTouchListener: OnChatRecordTouchListener? = null
@@ -283,8 +270,8 @@ class ChatUIKitLayout @JvmOverloads constructor(
             var refresh = false
             if (messages != null) {
                 for (message in messages) {
-                    sendGroupReadAck(message)
-                    sendReadAck(message)
+                    sendGroupReadReceipt(message)
+                    sendReadReceipt(message)
                     // group message
                     val username: String? =
                         if (message.chatType === ChatType.GroupChat || message.chatType === ChatType.ChatRoom) {
@@ -338,9 +325,13 @@ class ChatUIKitLayout @JvmOverloads constructor(
             }
         }
 
-        override fun onMessageRead(messages: MutableList<ChatMessage>?) {
-            super.onMessageRead(messages)
-            refreshMessages(messages)
+        override fun onMessageReadReceipts(receipts: MutableList<ChatMessageReadReceipt>?) {
+            super.onMessageReadReceipts(receipts)
+            receipts?.mapNotNull {
+                ChatClient.getInstance().chatManager().getMessage(it.messageId)
+            }?.let { messages ->
+                refreshMessages(messages)
+            }
         }
 
         override fun onMessageDelivered(messages: MutableList<ChatMessage>?) {
@@ -415,13 +406,6 @@ class ChatUIKitLayout @JvmOverloads constructor(
             }?:kotlin.run{
                 chatPinMessageController.fetchPinnedMessagesFromServer()
             }
-        }
-    }
-
-    private val conversationListener = object : ChatUIKitConversationListener() {
-
-        override fun onConversationRead(from: String?, to: String?) {
-            chatBinding.layoutChatMessage.notifyDataSetChanged()
         }
     }
 
@@ -589,21 +573,20 @@ class ChatUIKitLayout @JvmOverloads constructor(
             }
 
         })
-        chatBinding.layoutChatMessage.setOnMessageAckSendCallback(object :
-            OnMessageAckSendCallback {
+        chatBinding.layoutChatMessage.setOnMessageReadReceiptSendCallback(object :
+            OnMessageReadReceiptSendCallback {
 
-            override fun onSendAckSuccess(message: ChatMessage?) {
-                super.onSendAckSuccess(message)
+            override fun onSendReadReceiptSuccess(message: ChatMessage?) {
+                super.onSendReadReceiptSuccess(message)
                 sendChatUpdateEvent()
-                listener?.onSendAckSuccess(message)
+                listener?.onSendReadReceiptSuccess(message)
             }
 
-            override fun onSendAckError(message: ChatMessage?, code: Int, errorMsg: String?) {
-                listener?.onSendAckError(message, code, errorMsg)
+            override fun onSendReadReceiptError(message: ChatMessage?, code: Int, errorMsg: String?) {
+                listener?.onSendReadReceiptError(message, code, errorMsg)
             }
         })
         ChatUIKitClient.addChatMessageListener(chatMessageListener)
-        ChatUIKitClient.addConversationListener(conversationListener)
     }
 
     private fun setMenuItemClickListener(message: ChatMessage?) {
@@ -629,9 +612,6 @@ class ChatUIKitLayout @JvmOverloads constructor(
                             chatDialogController.showRecallDialog(mContext) {
                                 recallMessage(message)
                             }
-                        }
-                        R.id.action_chat_report -> {
-                            chatMessageReportController.showReportDialog(message)
                         }
                         R.id.action_chat_reply -> {
                             chatMessageReplyController.showExtendMessageReplyView(message)
@@ -683,7 +663,6 @@ class ChatUIKitLayout @JvmOverloads constructor(
 
     override fun onDetachedFromWindow() {
         ChatUIKitClient.removeChatMessageListener(chatMessageListener)
-        ChatUIKitClient.removeConversationListener(conversationListener)
         groupChangeListener?.let { ChatUIKitClient.removeGroupChangeListener(it) }
         chatRoomListener?.let { ChatUIKitClient.removeChatRoomChangeListener(it) }
         typingHandler?.removeCallbacksAndMessages(null)
@@ -726,19 +705,8 @@ class ChatUIKitLayout @JvmOverloads constructor(
     }
 
     fun loadData(msgId: String? = "", pageSize: Int = 10) {
-        sendChannelAck()
         chatBinding.layoutChatMessage.loadData(msgId, pageSize)
         getInProgressMessages()
-    }
-
-    private fun sendChannelAck() {
-        if (loadDataType == ChatUIKitLoadDataType.LOCAL) {
-            ChatClient.getInstance().chatManager().getConversation(conversationId)?.let {
-                if (it.unreadMsgCount > 0) {
-                    viewModel?.sendChannelAck()
-                }
-            }
-        }
     }
 
     private fun getInProgressMessages() {
@@ -890,8 +858,8 @@ class ChatUIKitLayout @JvmOverloads constructor(
         }
     }
 
-    override fun sendTextMessage(content: String?, isNeedGroupAck: Boolean) {
-        viewModel?.sendTextMessage(content, isNeedGroupAck)
+    override fun sendTextMessage(content: String?, isNeedReadReceipt: Boolean) {
+        viewModel?.sendTextMessage(content, isNeedReadReceipt)
     }
 
     override fun sendAtMessage(content: String?) {
@@ -958,20 +926,12 @@ class ChatUIKitLayout @JvmOverloads constructor(
         viewModel?.recallMessage(message)
     }
 
-    override fun reportMessage(tag: String, reason: String, message: ChatMessage?) {
-        message?.msgId?.let { viewModel?.reportMessage(tag,reason, it) }
-    }
-
     override fun modifyMessage(messageId: String?, messageBodyModified: ChatMessageBody?) {
         viewModel?.modifyMessage(messageId, messageBodyModified)
     }
 
     override fun setOnEditMessageListener(listener: OnModifyMessageListener?) {
         this.modifyMessageListener = listener
-    }
-
-    override fun setOnReportMessageListener(listener: OnReportMessageListener?) {
-        this.reportMessageListener = listener
     }
 
     override fun setOnTranslationMessageListener(listener: OnTranslationMessageListener?) {
@@ -1010,27 +970,27 @@ class ChatUIKitLayout @JvmOverloads constructor(
         this.multipleSelectRemoveMsgListener = listener
     }
 
-    override fun ackConversationReadSuccess() {
+    override fun clearConversationUnreadMessageCountSuccess() {
 
     }
 
-    override fun ackConversationReadFail(code: Int, message: String?) {
+    override fun clearConversationUnreadMessageCountFail(code: Int, message: String?) {
         listener?.onError(code, message)
     }
 
-    override fun ackGroupMessageReadSuccess() {
+    override fun sendGroupMessageReadReceiptSuccess() {
 
     }
 
-    override fun ackGroupMessageReadFail(code: Int, message: String?) {
+    override fun sendGroupMessageReadReceiptFail(code: Int, message: String?) {
         listener?.onError(code, message)
     }
 
-    override fun ackMessageReadSuccess() {
+    override fun sendMessageReadReceiptSuccess() {
 
     }
 
-    override fun ackMessageReadFail(code: Int, message: String?) {
+    override fun sendMessageReadReceiptFail(code: Int, message: String?) {
         listener?.onError(code, message)
     }
 
@@ -1156,14 +1116,6 @@ class ChatUIKitLayout @JvmOverloads constructor(
 
     override fun createReplyMessageExtFail(code: Int, error: String?) {
         listener?.onError(code, error)
-    }
-
-    override fun onReportMessageSuccess(msgId: String) {
-        reportMessageListener?.onReportMessageSuccess(msgId)
-    }
-
-    override fun onReportMessageFail(msgId: String, code: Int, error: String) {
-        reportMessageListener?.onReportMessageFailure(msgId,code,error)
     }
 
     override fun onTranslationMessageSuccess(message: ChatMessage?) {
@@ -1319,11 +1271,11 @@ class ChatUIKitLayout @JvmOverloads constructor(
         finishListener?.onChatFinish(reason, id)
     }
 
-    private fun sendReadAck(message: ChatMessage) {
+    private fun sendReadReceipt(message: ChatMessage) {
         // enable send channel ack and should not show unread notification in chat
         if (ChatUIKitClient.getConfig()?.chatConfig?.enableSendChannelAck == true && ChatUIKitClient.getConfig()?.chatConfig?.showUnreadNotificationInChat == false) {
-            //It is a received message, a read ack message has not been sent and it is a single chat
-            if (message.direct() === ChatMessageDirection.RECEIVE && !message.isAcked && message.chatType === ChatType.Chat) {
+            //It is a received message, a read receipt has not been sent and it is a single chat
+            if (message.direct() === ChatMessageDirection.RECEIVE && !message.isPeerRead && message.chatType === ChatType.Chat) {
                 val type = message.type
                 //Video, voice and files need to be clicked before sending
                 if (type === ChatMessageType.VIDEO || type === ChatMessageType.VOICE || type === ChatMessageType.FILE) {
@@ -1333,18 +1285,18 @@ class ChatUIKitLayout @JvmOverloads constructor(
                 if (!TextUtils.equals(message.conversationId(), conversationId)) {
                     return
                 }
-                viewModel?.sendMessageReadAck(message.msgId)
+                viewModel?.sendMessageReadReceipt(message.msgId)
             }
         }
     }
 
-    private fun sendGroupReadAck(message: ChatMessage) {
-        if (message.isNeedGroupAck && message.isUnread && TextUtils.equals(
+    private fun sendGroupReadReceipt(message: ChatMessage) {
+        if (message.isNeedReadReceipt && !message.isRead && TextUtils.equals(
                 message.conversationId(),
                 conversationId
             )
         ) {
-            viewModel?.sendGroupMessageReadAck(message.msgId, "")
+            viewModel?.sendGroupMessageReadReceipt(message.msgId, "")
         }
     }
 

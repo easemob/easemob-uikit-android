@@ -10,7 +10,7 @@ class ChatUIKitTextViewHolder(itemView: View) : ChatUIKitRowViewHolder(itemView)
 
         message?.let {
             // Send the group-ack cmd type msg if this msg is a ding-type msg.
-            ChatUIKitDingMessageHelper.get().sendAckMessage(it)
+            ChatUIKitDingMessageHelper.get().sendReadReceipt(it)
         }
 
     }

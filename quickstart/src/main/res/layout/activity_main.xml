@@ -14,11 +14,11 @@
         android:hint="UserId"/>
 
     <EditText
-        android:id="@+id/et_password"
+        android:id="@+id/et_token"
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:layout_margin="20dp"
-        android:hint="Password"/>
+        android:hint="Chat Token"/>
 
     <Button
         android:id="@+id/btn_login"

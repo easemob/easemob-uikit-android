@@ -26,31 +26,30 @@ interface IChatViewRequest: IAttachView {
     fun bindParentId(parentId: String?)
 
     /**
-     * Send Channel ack message.
-     * (1) If it is a 1v1 session, the other party will receive a channel ack callback, the callback method
-     * is {@link ConversationListener#onConversationRead(String, String)}
-     * The SDK will set the isAcked of the message sent for this session to true.
-     * (2) If it is a multi-terminal device, the other end will receive a channel ack callback, and the SDK will set the session as read.
-     * (3) Not send channel ack when the conversation is thread
+     * Clear the unread count of the conversation.
+     * (1) Clear the unread count of the conversation locally and sync it to the other devices.
+     * (2) The peer's read state is delivered via `MessageListener#onMessageReadReceipts`
+     * after the peer sends read receipts for the messages.
+     * (3) Not clear when the conversation is thread
      */
-    fun sendChannelAck()
+    fun clearConversationUnreadMessageCount()
 
     /**
-     * Send group message read ack.
+     * Send group message read receipt.
      */
-    fun sendGroupMessageReadAck(messageId: String?, ext: String?)
+    fun sendGroupMessageReadReceipt(messageId: String?, ext: String?)
 
     /**
-     * Send message read ack.
+     * Send message read receipt.
      */
-    fun sendMessageReadAck(messageId: String?)
+    fun sendMessageReadReceipt(messageId: String?)
 
     /**
      * Send text message
      * @param content
-     * @param isNeedGroupAck Whether need a group receipt
+     * @param isNeedReadReceipt Whether the message needs a read receipt
      */
-    fun sendTextMessage(content: String?, isNeedGroupAck: Boolean = false)
+    fun sendTextMessage(content: String?, isNeedReadReceipt: Boolean = false)
 
     /**
      * Send @ message
@@ -163,14 +162,6 @@ interface IChatViewRequest: IAttachView {
      * @param message
      */
     fun resendMessage(message: ChatMessage?)
-
-    /**
-     * Report message
-     * @param tag
-     * @param reason
-     * @param msgId
-     */
-    fun reportMessage(tag: String, reason: String?="",msgId: String)
 
     /**
      * Delete local message

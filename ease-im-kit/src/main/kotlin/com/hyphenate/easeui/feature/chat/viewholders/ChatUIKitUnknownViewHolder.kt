@@ -9,7 +9,7 @@ class ChatUIKitUnknownViewHolder(itemView: View) : ChatUIKitRowViewHolder(itemVi
         super.handleReceiveMessage(message)
         message?.let {
             // Send the group-ack cmd type msg if this msg is a ding-type msg.
-            ChatUIKitDingMessageHelper.get().sendAckMessage(it)
+            ChatUIKitDingMessageHelper.get().sendReadReceipt(it)
         }
     }
 }

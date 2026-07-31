@@ -46,8 +46,6 @@
     <item name="action_chat_select" type="id" />
     <!--edit-->
     <item name="action_chat_edit" type="id" />
-    <!--report-->
-    <item name="action_chat_report" type="id" />
     <!--create thread-->
     <item name="action_chat_thread" type="id" />
     <!--long click-->

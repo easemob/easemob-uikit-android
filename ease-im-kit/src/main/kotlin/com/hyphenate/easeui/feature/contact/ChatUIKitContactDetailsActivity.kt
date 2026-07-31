@@ -103,7 +103,7 @@ open class ChatUIKitContactDetailsActivity:ChatUIKitBaseActivity<EaseLayoutConta
     }
 
     private fun initSwitch(){
-        val isSilent = ChatUIKitClient.getCache().getMutedConversationList().containsKey(user?.userId)
+        val isSilent = user?.userId?.let(ChatUIKitClient::checkMutedConversationList) == true
         if (isSilent){
             binding.switchItemDisturb.setChecked(true)
             binding.icNotice.visibility = View.VISIBLE

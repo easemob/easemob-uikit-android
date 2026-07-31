@@ -22,49 +22,6 @@ import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
 /**
- * Suspend method for [ChatManager.fetchConversationsFromServer(Int, String, ValueCallback)]
- *
- * @param limit The number of conversations that you expect to get on each page. The value range is [1,50].
- * @param cursor The position from which to start to get data. If you pass in `null` or an empty string (""),
- *                  the SDK retrieves conversations from the latest active one.
- * @return [ChatCursorResult] The result of the request.
- */
-suspend fun ChatManager.fetchConversationsFromServer(limit: Int, cursor: String?): ChatCursorResult<ChatConversation> {
-    return suspendCoroutine { continuation ->
-        asyncFetchConversationsFromServer(limit, cursor, ValueCallbackImpl<ChatCursorResult<ChatConversation>>(
-                onSuccess = { value ->
-                    continuation.resume(value)
-                },
-                onError = { code, message ->
-                    continuation.resumeWithException(ChatException(code, message))
-                }
-            )
-        )
-    }
-}
-
-/**
- * Suspend method for [ChatManager.asyncFetchPinnedConversationsFromServer(Int, String, ValueCallback)]
- * @param limit The number of conversations that you expect to get on each page. The value range is [1,50].
- * @param cursor The position from which to start to get data. If you pass in `null` or an empty string (""),
- *                 the SDK retrieves the pinned conversations from the latest pinned one.
- * @return [ChatCursorResult] The result of the request.
- */
-suspend fun ChatManager.fetchPinedConversationsFromServer(limit: Int, cursor: String?): ChatCursorResult<ChatConversation> {
-    return suspendCoroutine { continuation ->
-        asyncFetchPinnedConversationsFromServer(limit, cursor, ValueCallbackImpl<ChatCursorResult<ChatConversation>>(
-                onSuccess = { value ->
-                    continuation.resume(value)
-                },
-                onError = { code, message ->
-                    continuation.resumeWithException(ChatException(code, message))
-                }
-            )
-        )
-    }
-}
-
-/**
  * Suspend method for [ChatManager.asyncPinConversation(String, Boolean, Callback)]
  *
  * @param conversationId The id of the conversation to be pinned.
@@ -234,44 +191,61 @@ suspend fun ChatManager.removeMessageReaction(messageId: String?, reaction: Stri
 }
 
 /**
- * Suspend method for [ChatManager.ackConversationRead]
+ * Suspend method for [ChatManager.asyncClearConversationUnreadMessageCount].
+ * Clears the unread count of the conversation locally and syncs it to other devices.
  */
-suspend fun ChatManager.ackConversationToRead(conversationId: String?): Int {
+suspend fun ChatManager.clearConversationUnreadMessageCount(conversationId: String?): Int {
     return suspendCoroutine { continuation ->
-        try {
-            ackConversationRead(conversationId)
-            continuation.resume(ChatError.EM_NO_ERROR)
-        } catch (e: ChatException) {
-            continuation.resumeWithException(ChatException(e.errorCode, e.message))
+        if (conversationId.isNullOrEmpty()) {
+            continuation.resumeWithException(ChatException(ChatError.INVALID_PARAM, "conversationId is null or empty"))
+            return@suspendCoroutine
         }
+        asyncClearConversationUnreadMessageCount(conversationId, object : ChatCallback {
+            override fun onSuccess() {
+                continuation.resume(ChatError.EM_NO_ERROR)
+            }
+
+            override fun onError(code: Int, message: String?) {
+                continuation.resumeWithException(ChatException(code, message))
+            }
+        })
     }
 }
 
 /**
- * Suspend method for [ChatManager.ackGroupMessageRead]
+ * Suspend method for [ChatManager.asyncSendMessageReadReceipts].
+ * [ext] is no longer used by the SDK and is kept only for compatibility.
  */
-suspend fun ChatManager.ackGroupMessageToRead(conversationId: String?, messageId: String?, ext: String?): Int {
-    return suspendCoroutine { continuation ->
-        try {
-            ackGroupMessageRead(conversationId, messageId, ext)
-            continuation.resume(ChatError.EM_NO_ERROR)
-        } catch (e: ChatException) {
-            continuation.resumeWithException(ChatException(e.errorCode, e.message))
-        }
-    }
+suspend fun ChatManager.sendGroupMessageReadReceipt(conversationId: String?, messageId: String?, ext: String?): Int {
+    return sendMessageReadReceiptById(messageId)
 }
 
 /**
- * Suspend method for [ChatManager.ackMessageRead]
+ * Suspend method for [ChatManager.asyncSendMessageReadReceipts].
  */
-suspend fun ChatManager.ackMessageToRead(conversationId: String?, messageId: String?): Int {
+suspend fun ChatManager.sendMessageReadReceipt(conversationId: String?, messageId: String?): Int {
+    return sendMessageReadReceiptById(messageId)
+}
+
+/**
+ * Send the read receipt of the message specified by [messageId].
+ */
+private suspend fun ChatManager.sendMessageReadReceiptById(messageId: String?): Int {
     return suspendCoroutine { continuation ->
-        try {
-            ackMessageRead(conversationId, messageId)
-            continuation.resume(ChatError.EM_NO_ERROR)
-        } catch (e: ChatException) {
-            continuation.resumeWithException(ChatException(e.errorCode, e.message))
+        val message = messageId?.let { getMessage(it) }
+        if (message == null) {
+            continuation.resumeWithException(ChatException(ChatError.MESSAGE_INVALID, "message not found: $messageId"))
+            return@suspendCoroutine
         }
+        asyncSendMessageReadReceipts(listOf(message), object : ChatCallback {
+            override fun onSuccess() {
+                continuation.resume(ChatError.EM_NO_ERROR)
+            }
+
+            override fun onError(code: Int, message: String?) {
+                continuation.resumeWithException(ChatException(code, message))
+            }
+        })
     }
 }
 
@@ -324,23 +298,6 @@ suspend fun ChatManager.downloadThumbnailBySuspend(message: ChatMessage?): Pair<
             )
             downloadThumbnail(message)
         }
-    }
-}
-
-/**
- * Suspend method for [ChatManager.asyncReportMessage]
- */
-suspend fun ChatManager.reportChatMessage(messageId: String?,tag:String,reason:String?=""):Int{
-    return suspendCoroutine { continuation ->
-        asyncReportMessage(messageId,tag,reason, CallbackImpl(
-                onSuccess = {
-                    continuation.resume(ChatError.EM_NO_ERROR)
-                },
-                onError = { code, message ->
-                    continuation.resumeWithException(ChatException(code, message))
-                }
-            )
-        )
     }
 }
 

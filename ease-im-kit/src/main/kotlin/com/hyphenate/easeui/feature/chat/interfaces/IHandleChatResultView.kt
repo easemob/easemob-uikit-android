@@ -9,36 +9,36 @@ interface IHandleChatResultView : IControlDataView {
     /**
      * Callback when ack conversation read successfully.
      */
-    fun ackConversationReadSuccess()
+    fun clearConversationUnreadMessageCountSuccess()
 
     /**
      * Callback when ack conversation read failed.
      */
-    fun ackConversationReadFail(code: Int,  message: String?)
+    fun clearConversationUnreadMessageCountFail(code: Int,  message: String?)
 
     /**
      * Callback when send group read ack successfully.
      */
-    fun ackGroupMessageReadSuccess()
+    fun sendGroupMessageReadReceiptSuccess()
 
     /**
      * Callback when send group read ack failed.
      * @param code
      * @param message
      */
-    fun ackGroupMessageReadFail(code: Int,  message: String?)
+    fun sendGroupMessageReadReceiptFail(code: Int,  message: String?)
 
     /**
      * Callback when send message read ack successfully.
      */
-    fun ackMessageReadSuccess()
+    fun sendMessageReadReceiptSuccess()
 
     /**
      * Callback when send message read ack failed.
      * @param code
      * @param message
      */
-    fun ackMessageReadFail(code: Int,  message: String?)
+    fun sendMessageReadReceiptFail(code: Int,  message: String?)
 
     /**
      * Failed to generate video cover
@@ -179,20 +179,6 @@ interface IHandleChatResultView : IControlDataView {
      * @param error error message.
      */
     fun createReplyMessageExtFail(code: Int, error: String?)
-
-    /**
-     * report message success.
-     * @param msgId msgId.
-     */
-    fun onReportMessageSuccess(msgId:String){}
-
-    /**
-     * report message fail.
-     * @param msgId msgId.
-     * @param code  error code.
-     * @param error error message.
-     */
-    fun onReportMessageFail(msgId: String, code: Int, error: String){}
 
     /**
      * hide translation message.

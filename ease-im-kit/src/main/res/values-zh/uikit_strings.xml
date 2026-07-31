@@ -68,7 +68,6 @@
     <string name="uikit_action_recall">撤回</string>
     <string name="uikit_action_delete">删除</string>
     <string name="uikit_action_edit">编辑</string>
-    <string name="uikit_action_report">举报</string>
     <string name="uikit_action_translation">翻译</string>
     <string name="uikit_action_hide_translation">隐藏翻译</string>
     <string name="uikit_action_multi_select">多选</string>
@@ -252,13 +251,6 @@
     <!--Group Mention-->
     <string name="uikit_group_mention_title">\@&#160;提及</string>
     <string name="uikit_group_mention_all">所有人</string>
-
-    <!--report-->
-    <string name="uikit_report_title">消息举报</string>
-    <string name="uikit_report_reason">举报原因</string>
-    <string name="uikit_report_bottom_left">取消</string>
-    <string name="uikit_report_bottom_right">举报</string>
-    <string name="uikit_report_success">举报已提交</string>
 
     <!-- notifier -->
     <string name="uikit_notifier_channel_name">hyphenate chatuidemo message default channel.</string>

@@ -31,7 +31,6 @@ open class ChatUIKitGroupListFragment: ChatUIKitBaseFragment<UikitFragmentGroupL
     private var groupViewModel: IGroupRequest? = null
     private var data:MutableList<ChatGroup> = mutableListOf()
     private val layoutManager by lazy { LinearLayoutManager(mContext) }
-    private var currentPage:Int = 0
 
     private val groupChangeListener = object : ChatUIKitGroupListener() {
 
@@ -96,20 +95,15 @@ open class ChatUIKitGroupListFragment: ChatUIKitBaseFragment<UikitFragmentGroupL
             binding.refreshLayout.setOnRefreshListener {
                 refreshData()
             }
-            binding.refreshLayout.setOnLoadMoreListener {
-                currentPage++
-                loadMoreData()
-            }
         }
     }
 
     override fun initData() {
         super.initData()
-        currentPage = 0
         data.clear()
         adapter.clearData()
-        groupViewModel?.loadJoinedGroupData(currentPage)
         initEventBus()
+        groupViewModel?.loadLocalJoinedGroupData()
     }
 
     override fun onDestroyView() {
@@ -122,25 +116,32 @@ open class ChatUIKitGroupListFragment: ChatUIKitBaseFragment<UikitFragmentGroupL
     }
 
     private fun initEventBus(){
-        ChatUIKitFlowBus.with<ChatUIKitEvent>(ChatUIKitEvent.EVENT.DESTROY.name).register(this) {
+        ChatUIKitFlowBus.with<ChatUIKitEvent>(ChatUIKitEvent.EVENT.DESTROY.name).register(viewLifecycleOwner) {
             if (it.isGroupChange) {
                 refreshData()
             }
         }
 
-        ChatUIKitFlowBus.with<ChatUIKitEvent>(ChatUIKitEvent.EVENT.LEAVE.name).register(this) {
+        ChatUIKitFlowBus.with<ChatUIKitEvent>(ChatUIKitEvent.EVENT.LEAVE.name).register(viewLifecycleOwner) {
             if (it.isGroupChange) {
                 refreshData()
             }
         }
 
-        ChatUIKitFlowBus.with<ChatUIKitEvent>(ChatUIKitEvent.EVENT.ADD.name).register(this) {
+        ChatUIKitFlowBus.with<ChatUIKitEvent>(ChatUIKitEvent.EVENT.ADD.name).register(viewLifecycleOwner) {
             if (it.isGroupChange) {
                 refreshData()
             }
         }
-        ChatUIKitFlowBus.with<ChatUIKitEvent>(ChatUIKitEvent.EVENT.UPDATE + ChatUIKitEvent.TYPE.GROUP).register(this) {
-            if (it.isGroupChange && it.event == ChatUIKitConstant.EVENT_UPDATE_GROUP_NAME) {
+        ChatUIKitFlowBus.with<ChatUIKitEvent>(ChatUIKitEvent.EVENT.UPDATE.name).register(viewLifecycleOwner) {
+            if (it.isGroupChange) {
+                refreshData()
+            }
+        }
+        ChatUIKitFlowBus.with<ChatUIKitEvent>(ChatUIKitEvent.EVENT.UPDATE + ChatUIKitEvent.TYPE.GROUP).register(viewLifecycleOwner) {
+            if (it.isGroupChange && it.event == ChatUIKitEvent.EVENT.UPDATE.name) {
+                refreshData()
+            } else if (it.isGroupChange && it.event == ChatUIKitConstant.EVENT_UPDATE_GROUP_NAME) {
                 adapter.mData?.forEachIndexed { index, group ->
                     if (group.groupId == it.message) {
                         adapter.notifyItemChanged(index)
@@ -155,26 +156,9 @@ open class ChatUIKitGroupListFragment: ChatUIKitBaseFragment<UikitFragmentGroupL
         groupViewModel?.loadLocalJoinedGroupData()
     }
 
-    private fun loadMoreData(){
-        groupViewModel?.loadJoinedGroupData(currentPage)
-    }
-
-    override fun loadGroupListSuccess(list: MutableList<ChatGroup>) {
-        data.addAll(list)
-        adapter.addData(list)
-        binding?.refreshLayout?.finishRefresh()
-        updateView()
-    }
-
-    override fun loadGroupListFail(code: Int, error: String) {
-        binding?.refreshLayout?.finishRefresh()
-        updateView()
-    }
-
     override fun loadLocalGroupListSuccess(list: MutableList<ChatGroup>) {
         data.clear()
         adapter.clearData()
-        currentPage = 0
 
         list.reverse().apply {
             data.addAll(list)

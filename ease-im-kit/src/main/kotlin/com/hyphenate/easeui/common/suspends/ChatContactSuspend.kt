@@ -17,26 +17,6 @@ import kotlin.coroutines.suspendCoroutine
 
 
 /**
- * Suspend method for [ChatContactManager.fetchContactsFromServer()]
- * @return List<ChatUIKitUser> User Information List
- */
-suspend fun ChatContactManager.fetchContactsFromServer():List<ChatUIKitUser>{
-    return suspendCoroutine{ continuation ->
-        asyncGetAllContactsFromServer(ValueCallbackImpl(
-               onSuccess = { value ->
-                   value?.let {
-                       val list = it.map { contact ->
-                           ChatUIKitClient.getUserProvider()?.getSyncUser(contact)?.toUser() ?: ChatUIKitUser(contact)
-                       }
-                       continuation.resume(list)
-                   }
-               },
-               onError = {code,message-> continuation.resumeWithException(ChatException(code, message)) }
-           ))
-    }
-}
-
-/**
  * Suspend method for [ChatContactManager.addNewContact(userName,reason)]
  * @return [ChatError] The result of the request.
  */

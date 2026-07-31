@@ -9,16 +9,6 @@ import com.hyphenate.easeui.model.ChatUIKitUser
 interface IUIKitGroupResultView: IControlDataView {
 
     /**
-     * Load group list successfully.
-     */
-    fun loadGroupListSuccess(list: MutableList<ChatGroup>){}
-
-    /**
-     * Failed to Load group list.
-     */
-    fun loadGroupListFail(code: Int, error: String){}
-
-    /**
      * Load local group list successfully.
      */
     fun loadLocalGroupListSuccess(list: MutableList<ChatGroup>){}

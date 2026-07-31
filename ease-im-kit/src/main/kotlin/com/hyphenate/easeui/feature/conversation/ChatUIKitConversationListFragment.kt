@@ -100,12 +100,6 @@ open class ChatUIKitConversationListFragment: ChatUIKitBaseFragment<FragmentConv
         }
     }
 
-    private val conversationListener = object : ChatUIKitConversationListener() {
-        override fun onConversationRead(from: String?, to: String?) {
-            refreshData()
-        }
-    }
-
     override fun getViewBinding(
         inflater: LayoutInflater,
         container: ViewGroup?
@@ -159,14 +153,13 @@ open class ChatUIKitConversationListFragment: ChatUIKitBaseFragment<FragmentConv
         binding?.listConversation?.setLoadConversationListener(this)
         setMenuItemClickListener()
         ChatUIKitClient.addContactListener(contactListener)
-        ChatUIKitClient.addConversationListener(conversationListener)
         ChatUIKitClient.addGroupChangeListener(groupChangeListener)
         ChatUIKitClient.addMultiDeviceListener(multiDeviceListener)
     }
 
     override fun initData() {
-        binding?.listConversation?.loadData()
         initEventBus()
+        binding?.listConversation?.loadData()
     }
 
     private fun initEventBus() {
@@ -188,6 +181,12 @@ open class ChatUIKitConversationListFragment: ChatUIKitBaseFragment<FragmentConv
                 refreshData()
             }
         }
+        ChatUIKitFlowBus.with<ChatUIKitEvent>(ChatUIKitEvent.EVENT.UPDATE + ChatUIKitEvent.TYPE.CONVERSATION)
+            .register(viewLifecycleOwner) {
+                if (it.isConversationChange) {
+                    refreshData()
+                }
+            }
         // Listener the group leave event
         ChatUIKitFlowBus.with<ChatUIKitEvent>(ChatUIKitEvent.EVENT.LEAVE.name).register(viewLifecycleOwner) {
             if (it.isGroupChange) {
@@ -200,12 +199,12 @@ open class ChatUIKitConversationListFragment: ChatUIKitBaseFragment<FragmentConv
                 refreshData()
             }
         }
-        ChatUIKitFlowBus.with<ChatUIKitEvent>(ChatUIKitEvent.EVENT.UPDATE + ChatUIKitEvent.TYPE.GROUP).register(this) {
+        ChatUIKitFlowBus.with<ChatUIKitEvent>(ChatUIKitEvent.EVENT.UPDATE + ChatUIKitEvent.TYPE.GROUP).register(viewLifecycleOwner) {
             if (it.isGroupChange && it.event == ChatUIKitConstant.EVENT_UPDATE_GROUP_NAME) {
                 refreshData()
             }
         }
-        ChatUIKitFlowBus.with<ChatUIKitEvent>(ChatUIKitEvent.EVENT.REMOVE + ChatUIKitEvent.TYPE.GROUP + ChatUIKitEvent.TYPE.CONTACT).register(this) {
+        ChatUIKitFlowBus.with<ChatUIKitEvent>(ChatUIKitEvent.EVENT.REMOVE + ChatUIKitEvent.TYPE.GROUP + ChatUIKitEvent.TYPE.CONTACT).register(viewLifecycleOwner) {
             if (it.isGroupChange && it.event == ChatUIKitConstant.EVENT_REMOVE_GROUP_MEMBER) {
                 refreshData()
             }
@@ -254,7 +253,6 @@ open class ChatUIKitConversationListFragment: ChatUIKitBaseFragment<FragmentConv
 
     override fun onDestroyView() {
         ChatUIKitClient.removeContactListener(contactListener)
-        ChatUIKitClient.removeConversationListener(conversationListener)
         ChatUIKitClient.removeGroupChangeListener(groupChangeListener)
         ChatUIKitClient.removeMultiDeviceListener(multiDeviceListener)
         super.onDestroyView()

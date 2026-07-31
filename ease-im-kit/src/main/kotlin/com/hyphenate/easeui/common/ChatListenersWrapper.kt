@@ -7,18 +7,24 @@ import com.hyphenate.EMMultiDeviceListener.GROUP_DESTROY
 import com.hyphenate.EMMultiDeviceListener.GROUP_JOIN
 import com.hyphenate.EMMultiDeviceListener.GROUP_LEAVE
 import com.hyphenate.chat.EMContact
+import com.hyphenate.chat.EMOptions.EMDataSyncType
+import com.hyphenate.chat.EMUserInfoManagerListener
 import com.hyphenate.easeui.ChatUIKitClient
 import com.hyphenate.easeui.common.bus.ChatUIKitFlowBus
 import com.hyphenate.easeui.common.extensions.createUnsentMessage
 import com.hyphenate.easeui.common.extensions.getUserInfo
 import com.hyphenate.easeui.common.extensions.isGroupChat
 import com.hyphenate.easeui.common.extensions.mainScope
+import com.hyphenate.easeui.common.extensions.parse
+import com.hyphenate.easeui.common.extensions.toProfile
 import com.hyphenate.easeui.common.helper.ChatUIKitAtMessageHelper
 import com.hyphenate.easeui.feature.invitation.enums.InviteMessageStatus
 import com.hyphenate.easeui.feature.invitation.helper.ChatUIKitNotificationMsgManager
 import com.hyphenate.easeui.feature.invitation.helper.RequestMsgHelper
 import com.hyphenate.easeui.interfaces.OnEventResultListener
+import com.hyphenate.easeui.model.ChatUIKitDataSyncEvent
 import com.hyphenate.easeui.model.ChatUIKitEvent
+import com.hyphenate.easeui.model.toUIKitEventType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -27,7 +33,7 @@ import java.util.Collections
 
 internal class ChatListenersWrapper : ChatConnectionListener, ChatMessageListener, ChatGroupChangeListener,
     ChatContactListener, ChatConversationListener, ChatPresenceListener,
-    ChatMultiDeviceListener, ChatThreadChangeListener {
+    ChatMultiDeviceListener, ChatThreadChangeListener, EMUserInfoManagerListener {
 
     private val chatConnectionListener = Collections.synchronizedList(mutableListOf<ChatConnectionListener>())
     private val chatMessageListener = Collections.synchronizedList(mutableListOf<ChatMessageListener>())
@@ -50,6 +56,7 @@ internal class ChatListenersWrapper : ChatConnectionListener, ChatMessageListene
         ChatClient.getInstance().chatroomManager().addChatRoomChangeListener(chatroomListener)
         ChatClient.getInstance().addMultiDeviceListener(this)
         ChatClient.getInstance().chatThreadManager().addChatThreadChangeListener(this)
+        ChatClient.getInstance().userInfoManager().addUserInfoManagerListener(this)
     }
 
     fun removeListeners(){
@@ -62,6 +69,7 @@ internal class ChatListenersWrapper : ChatConnectionListener, ChatMessageListene
         ChatClient.getInstance().chatroomManager().removeChatRoomChangeListener(chatroomListener)
         ChatClient.getInstance().removeMultiDeviceListener(this)
         ChatClient.getInstance().chatThreadManager().removeChatThreadChangeListener(this)
+        ChatClient.getInstance().userInfoManager().removeUserInfoManagerListener(this)
 
         chatConnectionListener.clear()
         chatMessageListener.clear()
@@ -241,6 +249,52 @@ internal class ChatListenersWrapper : ChatConnectionListener, ChatMessageListene
         }
     }
 
+    override fun onDatabaseOpened(username: String?) {
+        // DB 打开后、联系人回调到达前建立历史申请基线，防止升级后旧申请被重新计为未读。
+        ChatUIKitNotificationMsgManager.getInstance().initializeRequestReadCursor()
+        notifyDataChanged(ChatUIKitEvent.TYPE.CONVERSATION)
+        notifyDataChanged(ChatUIKitEvent.TYPE.CONTACT)
+        notifyDataChanged(ChatUIKitEvent.TYPE.GROUP)
+        chatConnectionListener.let {
+            for (connectionListener in it) {
+                try {
+                    connectionListener.onDatabaseOpened(username)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
+    override fun onDataSyncStart(type: EMDataSyncType?) {
+        postDataSyncState(type, ChatUIKitDataSyncEvent.STATE.STARTED)
+        chatConnectionListener.let {
+            for (connectionListener in it) {
+                try {
+                    connectionListener.onDataSyncStart(type)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
+    override fun onDataSyncFinish(type: EMDataSyncType?, errorCode: Int) {
+        postDataSyncState(type, ChatUIKitDataSyncEvent.STATE.FINISHED, errorCode)
+        if (errorCode == ChatError.EM_NO_ERROR) {
+            type.toUIKitEventType()?.let(::notifyDataChanged)
+        }
+        chatConnectionListener.let {
+            for (connectionListener in it) {
+                try {
+                    connectionListener.onDataSyncFinish(type, errorCode)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
     override fun onOfflineMessageSyncStart() {
 
     }
@@ -285,11 +339,11 @@ internal class ChatListenersWrapper : ChatConnectionListener, ChatMessageListene
         }
     }
 
-    override fun onGroupMessageRead(groupReadAcks: MutableList<ChatGroupReadAck>?) {
+    override fun onMessageReadReceipts(receipts: MutableList<ChatMessageReadReceipt>?) {
         chatMessageListener.let {
             for (messageListener in it) {
                 try {
-                    messageListener.onGroupMessageRead(groupReadAcks)
+                    messageListener.onMessageReadReceipts(receipts)
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -337,18 +391,6 @@ internal class ChatListenersWrapper : ChatConnectionListener, ChatMessageListene
         }
     }
 
-    override fun onMessageRead(messages: MutableList<ChatMessage>?) {
-        chatMessageListener.let {
-            for (messageListener in it) {
-                try {
-                    messageListener.onMessageRead(messages)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-        }
-    }
-
     override fun onMessageRecalledWithExt(recallMessageInfo: MutableList<ChatRecallMessageInfo>?) {
         if (recallMessageInfo != null && recallMessageInfo.size > 0) {
             for (recallMessage in recallMessageInfo) {
@@ -389,11 +431,11 @@ internal class ChatListenersWrapper : ChatConnectionListener, ChatMessageListene
         }
     }
 
-    override fun onReadAckForGroupMessageUpdated() {
+    override fun onReadReceiptForGroupMessageUpdated() {
         chatMessageListener.let {
             for (messageListener in it) {
                 try {
-                    messageListener.onReadAckForGroupMessageUpdated()
+                    messageListener.onReadReceiptForGroupMessageUpdated()
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -465,10 +507,6 @@ internal class ChatListenersWrapper : ChatConnectionListener, ChatMessageListene
                 }
             }
         }
-    }
-
-    override fun onRequestToJoinDeclined(p0: String?, p1: String?, p2: String?, p3: String?) {
-        
     }
 
     override fun onRequestToJoinDeclined(
@@ -650,10 +688,6 @@ internal class ChatListenersWrapper : ChatConnectionListener, ChatMessageListene
         }
     }
 
-    override fun onMemberJoined(p0: String?, p1: String?) {
-
-    }
-
     override fun onMembersJoined(groupId: String?, members:List<String>) {
         chatGroupChangeListener.let {
             for (groupListener in it) {
@@ -664,10 +698,6 @@ internal class ChatListenersWrapper : ChatConnectionListener, ChatMessageListene
                 }
             }
         }
-    }
-
-    override fun onMemberExited(p0: String?, p1: String?) {
-
     }
 
     override fun onMembersExited(groupId: String?, members: List<String>) {
@@ -822,30 +852,6 @@ internal class ChatListenersWrapper : ChatConnectionListener, ChatMessageListene
         }
     }
 
-    override fun onContactSyncStart() {
-        chatContactListener.let {
-            for (contactListener in it) {
-                try {
-                    contactListener.onContactSyncStart()
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-        }
-    }
-
-    override fun onContactSyncFinishWithError(errorCode: Int, errorMsg: String?) {
-        chatContactListener.let {
-            for (contactListener in it) {
-                try {
-                    contactListener.onContactSyncFinishWithError(errorCode, errorMsg)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-        }
-    }
-
     override fun onContactInfoUpdate(contact: EMContact?) {
         chatContactListener.let {
             for (contactListener in it) {
@@ -858,24 +864,66 @@ internal class ChatListenersWrapper : ChatConnectionListener, ChatMessageListene
         }
     }
 
+    /**  EMUserInfoManagerListener  */
+    override fun onSelfUserInfoUpdate(userInfo: ChatUserInfo?) {
+        userInfo?.let { updateUserInfoCache(listOf(it)) }
+    }
+
+    override fun onUserInfoUpdate(userInfoList: MutableList<ChatUserInfo>?) {
+        userInfoList?.let { updateUserInfoCache(it) }
+    }
+
+    /**
+     * Update the user info cache with the user attributes synced by the SDK,
+     * then notify the UI to refresh the avatar and nickname.
+     */
+    private fun updateUserInfoCache(userInfoList: List<ChatUserInfo>) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val profiles = userInfoList.map { info ->
+                info.parse().toProfile().apply {
+                    // The remark is not part of the user attributes, keep the cached one.
+                    if (remark.isNullOrEmpty()) {
+                        remark = ChatUIKitClient.getCache().getSdkUser(info.userId)?.remark
+                    }
+                }
+            }
+            if (profiles.isNotEmpty()) {
+                ChatUIKitClient.getCache().updateSdkUsers(profiles)
+                notifyDataChanged(ChatUIKitEvent.TYPE.CONTACT)
+                notifyDataChanged(ChatUIKitEvent.TYPE.CONVERSATION)
+            }
+        }
+    }
+
+    private fun postDataSyncState(
+        type: EMDataSyncType?,
+        state: ChatUIKitDataSyncEvent.STATE,
+        errorCode: Int? = null,
+    ) {
+        if (type == null || type == EMDataSyncType.NONE) return
+        ChatUIKitClient.getContext()?.let { context ->
+            ChatUIKitFlowBus
+                .withStick<ChatUIKitDataSyncEvent>(ChatUIKitDataSyncEvent.eventKey(type))
+                .post(context.mainScope(), ChatUIKitDataSyncEvent(type, state, errorCode))
+        }
+    }
+
+    private fun notifyDataChanged(type: ChatUIKitEvent.TYPE) {
+        ChatUIKitClient.getContext()?.let { context ->
+            ChatUIKitFlowBus.with<ChatUIKitEvent>(ChatUIKitEvent.EVENT.UPDATE + type)
+                .post(
+                    context.mainScope(),
+                    ChatUIKitEvent(ChatUIKitEvent.EVENT.UPDATE.name, type),
+                )
+        }
+    }
+
     /**  ConversationListener  */
     override fun onConversationUpdate() {
         chatConversationListener.let {
             for (conversationListener in it) {
                 try {
                     conversationListener.onConversationUpdate()
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-        }
-    }
-
-    override fun onConversationRead(from: String?, to: String?) {
-        chatConversationListener.let {
-            for (conversationListener in it) {
-                try {
-                    conversationListener.onConversationRead(from, to)
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -950,10 +998,6 @@ internal class ChatListenersWrapper : ChatConnectionListener, ChatMessageListene
                     }
                 }
             }
-        }
-
-        override fun onMuteListAdded(p0: String?, p1: MutableList<String>?, p2: Long) {
-
         }
 
         override fun onMuteListAdded(
@@ -1187,31 +1231,29 @@ internal class ChatListenersWrapper : ChatConnectionListener, ChatMessageListene
     private fun saveDefaultContactInvitedMsg(username: String?, reason: String?){
         val useDefaultContactSystemMsg = ChatUIKitClient.getConfig()?.systemMsgConfig?.useDefaultContactSystemMsg ?: false
         if (useDefaultContactSystemMsg){
-            var isExist = false
+            if (username.isNullOrEmpty()) return
             val allRequestMessage = ChatUIKitNotificationMsgManager.getInstance().getAllNotifyMessage()
             val localContact = ChatClient.getInstance().contactManager().contactsFromLocal
-            allRequestMessage.map {msg->
-                if (msg.ext()[ChatUIKitConstant.SYSTEM_MESSAGE_FROM] == username || localContact.contains(username)){
-                    isExist = true
-                }
+            if (localContact.contains(username)) return
+
+            // 同一用户的申请只保留一条；重复申请必须替换旧消息而不是直接忽略，
+            // 否则旧消息位于已读游标之前，本次申请将永远无法产生新的未读数。
+            allRequestMessage
+                .filter { it.ext()[ChatUIKitConstant.SYSTEM_MESSAGE_FROM] == username }
+                .forEach { ChatUIKitNotificationMsgManager.getInstance().removeMessage(it) }
+
+            val ext: MutableMap<String, Any> = ChatUIKitNotificationMsgManager.getInstance().createMsgExt()
+            ext[ChatUIKitConstant.SYSTEM_MESSAGE_FROM] = username
+            reason?.let {
+                ext[ChatUIKitConstant.SYSTEM_MESSAGE_REASON] = it
             }
-            if (!isExist){
-                val ext: MutableMap<String, Any> = ChatUIKitNotificationMsgManager.getInstance().createMsgExt()
-                username?.let {
-                    ext[ChatUIKitConstant.SYSTEM_MESSAGE_FROM] = it
-                }
-                reason?.let {
-                    ext[ChatUIKitConstant.SYSTEM_MESSAGE_REASON] = it
-                }
-                ext[ChatUIKitConstant.SYSTEM_MESSAGE_STATUS] = InviteMessageStatus.BEINVITEED.name
-                ChatUIKitClient.getContext()?.let {
-                    ChatUIKitNotificationMsgManager.getInstance()
-                        .createMessage( RequestMsgHelper.getSystemMessage(it,ext), ext)
+            ext[ChatUIKitConstant.SYSTEM_MESSAGE_STATUS] = InviteMessageStatus.BEINVITEED.name
+            ChatUIKitClient.getContext()?.let {
+                ChatUIKitNotificationMsgManager.getInstance()
+                    .createMessage(RequestMsgHelper.getSystemMessage(it,ext), ext)
 
-                    ChatUIKitFlowBus.withStick<ChatUIKitEvent>(ChatUIKitEvent.EVENT.ADD.name)
-                        .post(it.mainScope(), ChatUIKitEvent(ChatUIKitEvent.EVENT.ADD.name, ChatUIKitEvent.TYPE.NOTIFY))
-
-                }
+                ChatUIKitFlowBus.withStick<ChatUIKitEvent>(ChatUIKitEvent.EVENT.ADD.name)
+                    .post(it.mainScope(), ChatUIKitEvent(ChatUIKitEvent.EVENT.ADD.name, ChatUIKitEvent.TYPE.NOTIFY))
             }
         }
     }

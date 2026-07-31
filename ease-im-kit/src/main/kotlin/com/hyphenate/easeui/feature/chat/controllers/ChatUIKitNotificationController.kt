@@ -65,8 +65,7 @@ class ChatUIKitNotificationController(
         binding.layoutChatMessage.isCanAutoScrollToBottom = true
         ChatClient.getInstance().chatManager().getConversation(conversationId)?.let {
             if (it.unreadMsgCount > 0) {
-                it.markAllMessagesAsRead()
-                viewModel?.sendChannelAck()
+                viewModel?.clearConversationUnreadMessageCount()
             }
         }
     }

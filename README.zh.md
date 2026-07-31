@@ -297,10 +297,24 @@ quickstart
 
 使用单群聊 UIKit 需要进行初始化，示例代码如下：
 ```kotlin
+import com.hyphenate.chat.EMOptions.EMDataSyncType
+import java.util.EnumSet
+
 val options = ChatOptions()
 options.appKey = "[Your appkey]"
+options.setEnableUserInfo(true)
+options.setDataSyncType(
+    EnumSet.of(
+        EMDataSyncType.CONVERSATIONS,
+        EMDataSyncType.CONTACTS,
+        EMDataSyncType.JOINED_GROUPS,
+    )
+)
 ChatUIKitClient.init(this, options)
 ```
+
+SDK 5.0 默认不会同步会话、联系人和已加入群组，需要通过 `EMDataSyncType` 显式开启；
+用户信息自动管理同样默认关闭。
 
 ### 登录
 
@@ -1011,6 +1025,7 @@ ChatUIKitConfig 提供的配置项解释：
 
 | 属性                                    | 说明                                                             |
 | -------------------------------------- | ---------------------------------------------------------------- |
+| compatibilityModeForUserInfo           | 是否为兼容旧版 UIKit，将当前用户的昵称和头像添加到消息扩展中，默认为 `false`。 |
 | enableReplyMessage                     | 消息回复功能是否可用，默认为可用。                                     |
 | enableModifyMessageAfterSent           | 消息编辑功能是否可用，默认为可用。                                     |
 | timePeriodCanRecallMessage             | 设置消息可撤回的时间，默认为2分钟。                                    |
@@ -1045,8 +1060,16 @@ UIKit 中多个地方用到用户信息，而这些用户信息需要开发者�
 
 ### 当前登录用户信息
 
-用户调用登录接口 `ChatUIKitClient.login` 时需要传入一个 `ChatUIKitProfile` 的对象，包含 `id`, `name` 和 `avatar` 三个属性。`id` 是必须设置的参数，`name` 和 `avatar` 将用于当前用户昵称和头像的展示。并在发送消息时，将`name` 和 `avatar`属性设置到消息的`ext`中，方便其他用户进行展示。
+用户调用登录接口 `ChatUIKitClient.login` 时需要传入一个 `ChatUIKitProfile` 的对象，包含 `id`, `name` 和 `avatar` 三个属性。`id` 是必须设置的参数，`name` 和 `avatar` 将用于当前用户昵称和头像的展示。
 如果登录时没有传入 `name` 和 `avatar` 属性，可以在登录后，调用 `ChatUIKitClient.updateCurrentUser` 对当前用户的信息进行更新。
+
+如需兼容使用旧版 UIKit 的客户端，可以开启兼容模式，将当前用户的 `name` 和 `avatar` 添加到消息的 `ease_chat_uikit_user_info` 扩展中。该开关默认关闭，且不影响接收消息时对用户信息的解析。
+
+```kotlin
+ChatUIKitClient.getConfig()
+    ?.chatConfig
+    ?.compatibilityModeForUserInfo = true
+```
 
 ### 联系人信息提供
 

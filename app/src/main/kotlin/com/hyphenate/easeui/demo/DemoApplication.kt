@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Intent
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
+import com.hyphenate.chat.EMOptions.EMDataSyncType
 import com.hyphenate.easeui.ChatUIKitClient
 import com.hyphenate.easeui.feature.chat.activities.UIKitChatActivity
 import com.hyphenate.easeui.common.ChatConnectionListener
@@ -22,6 +23,7 @@ import com.hyphenate.easeui.provider.ChatUIKitUserProfileProvider
 import com.scwang.smart.refresh.footer.ClassicsFooter
 import com.scwang.smart.refresh.header.ClassicsHeader
 import com.scwang.smart.refresh.layout.SmartRefreshLayout
+import java.util.EnumSet
 
 class DemoApplication: Application() {
     private val mLifecycleCallbacks = UserActivityLifecycleCallbacks()
@@ -40,6 +42,14 @@ class DemoApplication: Application() {
         options.appKey = appkey
         options.acceptInvitationAlways = false
         options.requireDeliveryAck = true
+        options.setEnableUserInfo(true)
+        options.setDataSyncType(
+            EnumSet.of(
+                EMDataSyncType.CONVERSATIONS,
+                EMDataSyncType.CONTACTS,
+                EMDataSyncType.JOINED_GROUPS,
+            )
+        )
         ChatUIKitClient.init(this, options)
 
         ChatUIKitClient.setCustomActivityRoute(object : ChatUIKitCustomActivityRoute {

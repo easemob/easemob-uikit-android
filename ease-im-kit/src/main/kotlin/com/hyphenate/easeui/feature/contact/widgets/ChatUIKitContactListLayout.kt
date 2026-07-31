@@ -289,12 +289,9 @@ class ChatUIKitContactListLayout@JvmOverloads constructor(
     }
 
     override fun fetchUserInfoByUserSuccess(users: List<ChatUIKitUser>?) {
-        if (!users.isNullOrEmpty()) {
-            listAdapter?.notifyItemRangeChanged(0, listAdapter?.itemCount ?: 0)
-            if (!isFirstLoadInfo){
-                contactViewModel?.loadData()
-                isFirstLoadInfo = true
-            }
+        if (!users.isNullOrEmpty() && !isFirstLoadInfo) {
+            isFirstLoadInfo = true
+            contactViewModel?.loadData()
         }
     }
 

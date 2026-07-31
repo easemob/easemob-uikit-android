@@ -59,9 +59,9 @@ interface IChatLayout {
     /**
      * Send text message
      * @param content
-     * @param isNeedGroupAck Need group receipt
+     * @param isNeedReadReceipt Whether the message needs a read receipt
      */
-    fun sendTextMessage(content: String?, isNeedGroupAck: Boolean = false)
+    fun sendTextMessage(content: String?, isNeedReadReceipt: Boolean = false)
 
     /**
      * send @ message
@@ -143,14 +143,6 @@ interface IChatLayout {
     fun resendMessage(message: ChatMessage?)
 
     /**
-     * Report message
-     * @param tag
-     * @param reason
-     * @param message
-     */
-    fun reportMessage(tag:String,reason:String,message: ChatMessage?)
-
-    /**
      * delete local message
      * @param message
      */
@@ -180,12 +172,6 @@ interface IChatLayout {
      * @param listener
      */
     fun setOnEditMessageListener(listener: OnModifyMessageListener?)
-
-    /**
-     * Set the report message listening
-     * @param listener
-     */
-    fun setOnReportMessageListener(listener:OnReportMessageListener?)
 
     /**
      * Set the translation message listening

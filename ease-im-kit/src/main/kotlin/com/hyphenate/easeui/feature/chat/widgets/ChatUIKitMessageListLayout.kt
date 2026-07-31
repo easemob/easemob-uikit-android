@@ -17,18 +17,25 @@ import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.OnScrollListener
+import com.hyphenate.easeui.ChatUIKitClient
+import com.hyphenate.easeui.common.ChatCallback
 import com.hyphenate.easeui.common.ChatClient
 import com.hyphenate.easeui.common.ChatConversation
 import com.hyphenate.easeui.common.ChatConversationType
 import com.hyphenate.easeui.common.ChatLog
 import com.hyphenate.easeui.common.ChatMessage
+import com.hyphenate.easeui.common.ChatMessageDirection
 import com.hyphenate.easeui.common.ChatMessageStatus
 import com.hyphenate.easeui.common.ChatSearchDirection
 import com.hyphenate.easeui.common.Chatroom
 import com.hyphenate.easeui.common.RefreshHeader
 import com.hyphenate.easeui.common.bus.ChatUIKitFlowBus
+import com.hyphenate.easeui.common.extensions.chunkReadReceipts
+import com.hyphenate.easeui.common.extensions.collectHistoricalUnreadItems
+import com.hyphenate.easeui.common.extensions.ioScope
 import com.hyphenate.easeui.common.extensions.lifecycleScope
 import com.hyphenate.easeui.common.extensions.mainScope
+import com.hyphenate.easeui.common.extensions.shouldSendHistoricalReadReceipt
 import com.hyphenate.easeui.common.impl.OnItemClickListenerImpl
 import com.hyphenate.easeui.databinding.UikitChatMessageListBinding
 import com.hyphenate.easeui.feature.chat.enums.ChatUIKitType
@@ -44,7 +51,7 @@ import com.hyphenate.easeui.feature.chat.interfaces.OnChatErrorListener
 import com.hyphenate.easeui.feature.chat.interfaces.OnMessageListItemClickListener
 import com.hyphenate.easeui.feature.chat.interfaces.OnMessageListTouchListener
 import com.hyphenate.easeui.feature.chat.enums.isShouldStackFromEnd
-import com.hyphenate.easeui.feature.chat.interfaces.OnMessageAckSendCallback
+import com.hyphenate.easeui.feature.chat.interfaces.OnMessageReadReceiptSendCallback
 import com.hyphenate.easeui.feature.chat.reaction.interfaces.OnChatUIKitReactionErrorListener
 import com.hyphenate.easeui.feature.chat.reply.interfaces.OnMessageReplyViewClickListener
 import com.hyphenate.easeui.feature.thread.interfaces.OnMessageChatThreadClickListener
@@ -54,6 +61,8 @@ import com.hyphenate.easeui.viewmodel.messages.IChatMessageListRequest
 import com.hyphenate.easeui.widget.ChatUIKitImageView.ShapeType
 import com.hyphenate.easeui.widget.RefreshLayout
 import kotlinx.coroutines.launch
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 class ChatUIKitMessageListLayout @JvmOverloads constructor(
     private val context: Context,
@@ -133,7 +142,7 @@ class ChatUIKitMessageListLayout @JvmOverloads constructor(
     /**
      * The message ack send callback.
      */
-    private var messageAckSendCallback: OnMessageAckSendCallback? = null
+    private var messageReadReceiptSendCallback: OnMessageReadReceiptSendCallback? = null
 
     /**
      * The label that whether load the latest messages.
@@ -292,15 +301,15 @@ class ChatUIKitMessageListLayout @JvmOverloads constructor(
                     chatErrorListener?.onChatError(errorCode, errorMessage)
                 }
             })
-            setOnMessageAckSendCallback(object: OnMessageAckSendCallback {
-                override fun onSendAckSuccess(message: ChatMessage?) {
-                    super.onSendAckSuccess(message)
-                    messageAckSendCallback?.onSendAckSuccess(message)
+            setOnMessageReadReceiptSendCallback(object: OnMessageReadReceiptSendCallback {
+                override fun onSendReadReceiptSuccess(message: ChatMessage?) {
+                    super.onSendReadReceiptSuccess(message)
+                    messageReadReceiptSendCallback?.onSendReadReceiptSuccess(message)
                 }
 
-                override fun onSendAckError(message: ChatMessage?, code: Int, errorMsg: String?) {
-                    ChatLog.e(TAG, "onSendAckError: $code, $errorMsg")
-                    messageAckSendCallback?.onSendAckError(message, code, errorMsg)
+                override fun onSendReadReceiptError(message: ChatMessage?, code: Int, errorMsg: String?) {
+                    ChatLog.e(TAG, "onSendReadReceiptError: $code, $errorMsg")
+                    messageReadReceiptSendCallback?.onSendReadReceiptError(message, code, errorMsg)
                 }
             })
         }
@@ -350,8 +359,7 @@ class ChatUIKitMessageListLayout @JvmOverloads constructor(
     private fun loadMessages() {
         conversation?.run {
             if (!isSingleChat(this)) itemConfig.showNickname = true
-            // Mark all message as read
-            makeAllMessagesAsRead()
+            handleUnreadMessagesOnEnter()
             when(loadDataType) {
                 ChatUIKitLoadDataType.ROAM -> viewModel?.fetchRoamMessages()
                 ChatUIKitLoadDataType.SEARCH -> viewModel?.loadLocalHistoryMessages(baseSearchMessageId, ChatSearchDirection.DOWN, true)
@@ -361,9 +369,86 @@ class ChatUIKitMessageListLayout @JvmOverloads constructor(
         }
     }
 
+    private fun handleUnreadMessagesOnEnter() {
+        if (loadDataType != ChatUIKitLoadDataType.LOCAL) return
+        val currentConversation = conversation ?: return
+        val unreadCount = currentConversation.unreadMsgCount
+        val shouldSendReceipts =
+            ChatUIKitClient.getConfig()?.chatConfig?.enableSendChannelAck == true &&
+                ChatUIKitClient.getConfig()?.chatConfig?.showUnreadNotificationInChat == false &&
+                currentConversation.type != ChatConversationType.ChatRoom
+        context.ioScope().launch {
+            try {
+                if (shouldSendReceipts && unreadCount > 0) {
+                    val messages = collectHistoricalUnreadMessages(currentConversation, unreadCount)
+                    chunkReadReceipts(messages).forEach { batch ->
+                        sendHistoricalReadReceiptBatch(batch)
+                    }
+                }
+            } catch (e: Exception) {
+                ChatLog.e(TAG, "collect historical unread messages failed: ${e.message}")
+            } finally {
+                ChatClient.getInstance().chatManager()
+                    .asyncClearConversationUnreadMessageCount(currentConversation.conversationId(), null)
+            }
+        }
+    }
+
+    private suspend fun sendHistoricalReadReceiptBatch(messages: List<ChatMessage>) {
+        suspendCoroutine { continuation ->
+            try {
+                ChatClient.getInstance().chatManager().asyncSendMessageReadReceipts(
+                    messages,
+                    object : ChatCallback {
+                        override fun onSuccess() {
+                            continuation.resume(Unit)
+                        }
+
+                        override fun onError(code: Int, error: String?) {
+                            ChatLog.e(TAG, "send historical read receipts failed: $code, $error")
+                            continuation.resume(Unit)
+                        }
+                    },
+                )
+            } catch (e: Exception) {
+                ChatLog.e(TAG, "send historical read receipts failed: ${e.message}")
+                continuation.resume(Unit)
+            }
+        }
+    }
+
+    private fun collectHistoricalUnreadMessages(
+        currentConversation: ChatConversation,
+        unreadTarget: Int,
+    ): List<ChatMessage> =
+        collectHistoricalUnreadItems(
+            unreadTarget = unreadTarget,
+            loadPage = { cursor, pageSize ->
+                currentConversation.searchMsgFromDB(cursor, pageSize, ChatSearchDirection.UP)
+            },
+            timestampOf = { it.msgTime },
+            uniqueKeyOf = { message ->
+                message.msgId.takeIf { it.isNotEmpty() }
+                    ?: "${message.msgTime}:${message.from}:${message.localTime()}"
+            },
+            isUnreadReceived = { message ->
+                message.direct() == ChatMessageDirection.RECEIVE && !message.isRead
+            },
+            shouldInclude = { message ->
+                val isReceived = message.direct() == ChatMessageDirection.RECEIVE
+                shouldSendHistoricalReadReceipt(
+                    isReceived = isReceived,
+                    isRead = message.isRead,
+                    isNeedReadReceipt = message.isNeedReadReceipt,
+                    isSingleChat = isSingleChat(currentConversation),
+                    messageType = message.type,
+                )
+            },
+        )
+
     private fun makeAllMessagesAsRead(sendEvent: Boolean = false) {
         conversation?.run {
-            markAllMessagesAsRead()
+            ChatClient.getInstance().chatManager().asyncClearConversationUnreadMessageCount(conversationId(), null)
             if (sendEvent) {
                 sendReadEvent(conversationId())
             }
@@ -629,8 +714,8 @@ class ChatUIKitMessageListLayout @JvmOverloads constructor(
         }
     }
 
-    override fun setOnMessageAckSendCallback(callback: OnMessageAckSendCallback?) {
-        this.messageAckSendCallback = callback
+    override fun setOnMessageReadReceiptSendCallback(callback: OnMessageReadReceiptSendCallback?) {
+        this.messageReadReceiptSendCallback = callback
     }
 
     override fun setOnChatErrorListener(listener: OnChatErrorListener?) {
@@ -885,6 +970,3 @@ class ChatUIKitMessageListLayout @JvmOverloads constructor(
     }
 
 }
-
-
-

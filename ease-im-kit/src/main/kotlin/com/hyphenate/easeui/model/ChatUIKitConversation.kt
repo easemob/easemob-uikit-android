@@ -5,6 +5,7 @@ import com.hyphenate.easeui.common.ChatClient
 import com.hyphenate.easeui.common.ChatConversation
 import com.hyphenate.easeui.common.ChatConversationType
 import com.hyphenate.easeui.common.ChatMessage
+import com.hyphenate.easeui.common.extensions.isSilentWithLegacyFallback
 import com.hyphenate.easeui.feature.chat.enums.ChatUIKitType
 import java.io.Serializable
 
@@ -35,7 +36,7 @@ data class ChatUIKitConversation(
      * @return The result of whether the conversation is silent.
      */
     fun isSilent(): Boolean {
-        return ChatUIKitClient.getCache().getMutedConversationList().containsKey(conversationId)
+        return chatConversation().isSilentWithLegacyFallback(conversationId)
     }
 
     /**
@@ -80,7 +81,8 @@ data class ChatUIKitConversation(
 /**
  * Get the bean of [ChatConversation] by conversation id.
  */
-fun ChatUIKitConversation.chatConversation(): ChatConversation? = ChatClient.getInstance().chatManager().getConversation(conversationId)
+fun ChatUIKitConversation.chatConversation(): ChatConversation? =
+    ChatClient.getInstance().chatManager().getConversation(conversationId, conversationType)
 
 /**
  * Get chat type from conversation type.

@@ -7,6 +7,7 @@ import com.hyphenate.easeui.common.ChatMessage
 import com.hyphenate.easeui.common.ChatSearchDirection
 import com.hyphenate.easeui.common.ChatSearchScope
 import com.hyphenate.easeui.common.impl.CallbackImpl
+import com.hyphenate.easeui.common.impl.ValueCallbackImpl
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -34,6 +35,7 @@ suspend fun ChatConversation.deleteMessage(messages: List<String>): Int =
  * @param maxCount
  * @param from
  * @param direction
+ * @param chatScope
  */
 suspend fun ChatConversation.searchMessage(
     keywords:String,
@@ -44,5 +46,18 @@ suspend fun ChatConversation.searchMessage(
     chatScope:ChatSearchScope
 ):List<ChatMessage> =
     suspendCoroutine { continuation ->
-        continuation.resume(searchMsgFromDB(keywords, timeStamp, maxCount, from, direction,chatScope))
+        asyncSearchMsgFromDB(
+            keywords,
+            timeStamp,
+            maxCount,
+            from?.takeIf { it.isNotEmpty() }?.let(::listOf),
+            direction,
+            chatScope,
+            ValueCallbackImpl(
+                onSuccess = { continuation.resume(it) },
+                onError = { code, error ->
+                    continuation.resumeWithException(ChatException(code, error))
+                }
+            )
+        )
     }

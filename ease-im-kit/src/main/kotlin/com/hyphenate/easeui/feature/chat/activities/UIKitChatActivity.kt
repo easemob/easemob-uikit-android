@@ -12,11 +12,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import com.hyphenate.easeui.ChatUIKitClient
 import com.hyphenate.easeui.R
 import com.hyphenate.easeui.base.ChatUIKitBaseActivity
-import com.hyphenate.easeui.common.ChatClient
 import com.hyphenate.easeui.common.ChatError
 import com.hyphenate.easeui.common.ChatLog
 import com.hyphenate.easeui.common.ChatUIKitConstant
 import com.hyphenate.easeui.common.extensions.hasRoute
+import com.hyphenate.easeui.common.extensions.resolveConversationDisplayInfo
 import com.hyphenate.easeui.common.extensions.showToast
 import com.hyphenate.easeui.common.permission.PermissionCompat
 import com.hyphenate.easeui.common.permission.PermissionsManager
@@ -26,8 +26,6 @@ import com.hyphenate.easeui.feature.chat.enums.ChatUIKitType
 import com.hyphenate.easeui.feature.chat.interfaces.OnChatExtendMenuItemClickListener
 import com.hyphenate.easeui.feature.chat.interfaces.OnChatRecordTouchListener
 import com.hyphenate.easeui.feature.chat.interfaces.OnMessageSendCallback
-import com.hyphenate.easeui.provider.getSyncProfile
-import com.hyphenate.easeui.provider.getSyncUser
 
 open class UIKitChatActivity: ChatUIKitBaseActivity<UikitActivityChatBinding>() {
 
@@ -196,19 +194,7 @@ open class UIKitChatActivity: ChatUIKitBaseActivity<UikitActivityChatBinding>() 
     }
 
     private fun getChatTitle(conversationId: String?, chatType: ChatUIKitType): String? {
-        return when (chatType) {
-            ChatUIKitType.SINGLE_CHAT -> {
-                ChatUIKitClient.getUserProvider()?.getSyncUser(conversationId)?.getRemarkOrName() ?: conversationId
-            }
-            ChatUIKitType.GROUP_CHAT -> {
-                ChatUIKitClient.getGroupProfileProvider()?.getSyncProfile(conversationId)?.name
-                ?: ChatClient.getInstance().groupManager().getGroup(conversationId)?.groupName
-                ?: conversationId
-            }
-            ChatUIKitType.CHATROOM -> {
-                ChatClient.getInstance().chatroomManager().getChatRoom(conversationId)?.name ?: conversationId
-            }
-        }
+        return resolveConversationDisplayInfo(conversationId, chatType).name
     }
 
     private fun onRequestResult(result: Map<String, Boolean>?, requestCode: Int) {

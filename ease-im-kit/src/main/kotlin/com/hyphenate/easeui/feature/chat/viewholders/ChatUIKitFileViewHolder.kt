@@ -4,7 +4,6 @@ import android.net.Uri
 import android.view.View
 import com.hyphenate.easeui.feature.chat.activities.ChatUIKitShowNormalFileActivity
 import com.hyphenate.easeui.common.ChatClient
-import com.hyphenate.easeui.common.ChatException
 import com.hyphenate.easeui.common.ChatMessage
 import com.hyphenate.easeui.common.ChatMessageDirection
 import com.hyphenate.easeui.common.ChatNormalFileMessageBody
@@ -25,13 +24,9 @@ class ChatUIKitFileViewHolder(itemView: View) : ChatUIKitRowViewHolder(itemView)
             ChatUIKitShowNormalFileActivity.actionStart(mContext, message)
         }
         message?.run {
-            if(direct() == ChatMessageDirection.RECEIVE && !isAcked && chatType == ChatType.Chat) {
-                try {
-                    ChatClient.getInstance().chatManager()
-                        .ackMessageRead(from, msgId)
-                } catch (e: ChatException) {
-                    e.printStackTrace()
-                }
+            if(direct() == ChatMessageDirection.RECEIVE && !isPeerRead && chatType == ChatType.Chat) {
+                ChatClient.getInstance().chatManager()
+                    .asyncSendMessageReadReceipts(listOf(this), null)
             }
         }
     }

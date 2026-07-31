@@ -6,7 +6,6 @@ import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import androidx.annotation.ColorInt
 import com.hyphenate.easeui.R
-import com.hyphenate.easeui.common.ChatClient
 import com.hyphenate.easeui.common.PinyinHelper
 import com.hyphenate.easeui.common.helper.ChatUIKitEmojiHelper
 import java.util.regex.Pattern
@@ -38,24 +37,6 @@ internal fun String.getUpperFirstWord(): String {
     } else {
         pinyinArray[0][0].uppercase()
     }
-}
-
-/**
- * Get group name by group id.
- */
-internal fun String.getGroupNameFromId(): String {
-    ChatClient.getInstance().groupManager().getGroup(this)?.let {
-        return it.groupName
-    } ?: return this
-}
-
-/**
- * Get chatroom name by chatroom id.
- */
-internal fun String.getChatroomName(): String {
-    ChatClient.getInstance().chatroomManager().getChatRoom(this)?.let {
-        return it.name
-    } ?: return this
 }
 
 /**

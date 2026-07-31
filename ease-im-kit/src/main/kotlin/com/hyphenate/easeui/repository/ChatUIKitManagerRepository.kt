@@ -13,9 +13,9 @@ import com.hyphenate.easeui.common.ChatSearchDirection
 import com.hyphenate.easeui.common.ChatType
 import com.hyphenate.easeui.common.ChatValueCallback
 import com.hyphenate.easeui.common.ChatroomManager
-import com.hyphenate.easeui.common.suspends.ackConversationToRead
-import com.hyphenate.easeui.common.suspends.ackGroupMessageToRead
-import com.hyphenate.easeui.common.suspends.ackMessageToRead
+import com.hyphenate.easeui.common.suspends.clearConversationUnreadMessageCount
+import com.hyphenate.easeui.common.suspends.sendGroupMessageReadReceipt
+import com.hyphenate.easeui.common.suspends.sendMessageReadReceipt
 import com.hyphenate.easeui.common.suspends.addMessageReaction
 import com.hyphenate.easeui.common.suspends.fetchHistoryMessages
 import com.hyphenate.easeui.common.suspends.fetchPinChatMessageFromServer
@@ -27,7 +27,6 @@ import com.hyphenate.easeui.common.suspends.modifyMessage
 import com.hyphenate.easeui.common.suspends.pinChatMessage
 import com.hyphenate.easeui.common.suspends.recallChatMessage
 import com.hyphenate.easeui.common.suspends.removeMessageReaction
-import com.hyphenate.easeui.common.suspends.reportChatMessage
 import com.hyphenate.easeui.common.suspends.translationChatMessage
 import com.hyphenate.easeui.common.suspends.unPinChatMessage
 import com.hyphenate.easeui.common.utils.isMessageIdValid
@@ -93,11 +92,6 @@ class ChatUIKitManagerRepository(
                 , startMsgId, pageSize, direction).data
         }
 
-    suspend fun reportMessage(tag:String,reason:String?="",msgId: String):Int =
-        withContext(Dispatchers.IO) {
-            chatManager.reportChatMessage(msgId,tag,reason)
-        }
-
     suspend fun recallMessage(message: ChatMessage?) =
         withContext(Dispatchers.IO) {
             chatManager.recallChatMessage(message)
@@ -118,19 +112,19 @@ class ChatUIKitManagerRepository(
             chatManager.removeMessageReaction(message?.msgId, reaction)
         }
 
-    suspend fun ackConversationRead(conversationId: String?) =
+    suspend fun clearConversationUnreadMessageCount(conversationId: String?) =
         withContext(Dispatchers.IO) {
-            chatManager.ackConversationToRead(conversationId)
+            chatManager.clearConversationUnreadMessageCount(conversationId)
         }
 
-    suspend fun ackGroupMessageRead(conversationId: String?, messageId: String?, ext: String?) =
+    suspend fun sendGroupMessageReadReceipt(conversationId: String?, messageId: String?, ext: String?) =
         withContext(Dispatchers.IO) {
-            chatManager.ackGroupMessageToRead(conversationId, messageId, ext)
+            chatManager.sendGroupMessageReadReceipt(conversationId, messageId, ext)
         }
 
-    suspend fun ackMessageRead(conversationId: String?, messageId: String?) =
+    suspend fun sendMessageReadReceipt(conversationId: String?, messageId: String?) =
         withContext(Dispatchers.IO) {
-            chatManager.ackMessageToRead(conversationId, messageId)
+            chatManager.sendMessageReadReceipt(conversationId, messageId)
         }
 
     suspend fun addReaction(messageId: String?, reaction: String) =
