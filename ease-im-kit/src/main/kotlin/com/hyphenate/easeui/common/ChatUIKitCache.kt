@@ -60,10 +60,10 @@ class ChatUIKitCache {
         return sdkUserMap[userId]
     }
 
+    @Synchronized
     internal fun insertSdkUser(user: ChatUIKitProfile) {
-        sdkUserMap.compute(user.id) { _, cached ->
-            mergeProfiles(user.id, user, cached)
-        }
+        val cached = sdkUserMap[user.id]
+        sdkUserMap[user.id] = mergeProfiles(user.id, user, cached)
     }
 
     internal fun updateSdkUsers(users: List<ChatUIKitProfile>) {
@@ -90,6 +90,7 @@ class ChatUIKitCache {
         return mergeProfiles(userId, userMap[userId], sdkUserMap[userId])
     }
 
+    @Synchronized
     internal fun insertGroupNameCard(
         groupId: String?,
         userId: String?,
@@ -98,12 +99,9 @@ class ChatUIKitCache {
     ) {
         if (groupId.isNullOrEmpty() || userId.isNullOrEmpty()) return
         val key = GroupMemberKey(groupId, userId)
-        groupNameCardMap.compute(key) { _, cached ->
-            if (cached == null || timestamp >= cached.timestamp) {
-                ChatUIKitGroupNameCard(nameCard, timestamp)
-            } else {
-                cached
-            }
+        val cached = groupNameCardMap[key]
+        if (cached == null || timestamp >= cached.timestamp) {
+            groupNameCardMap[key] = ChatUIKitGroupNameCard(nameCard, timestamp)
         }
     }
 
