@@ -29,6 +29,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.Collections
+import kotlin.collections.filter
+import kotlin.collections.map
 
 
 internal class ChatListenersWrapper : ChatConnectionListener, ChatMessageListener, ChatGroupChangeListener,
@@ -424,18 +426,6 @@ internal class ChatListenersWrapper : ChatConnectionListener, ChatMessageListene
             for (messageListener in it) {
                 try {
                     messageListener.onReactionChanged(messageReactionChangeList)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-        }
-    }
-
-    override fun onReadReceiptForGroupMessageUpdated() {
-        chatMessageListener.let {
-            for (messageListener in it) {
-                try {
-                    messageListener.onReadReceiptForGroupMessageUpdated()
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }

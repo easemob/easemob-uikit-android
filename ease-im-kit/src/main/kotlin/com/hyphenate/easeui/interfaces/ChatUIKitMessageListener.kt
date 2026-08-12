@@ -16,8 +16,6 @@ open class ChatUIKitMessageListener: ChatMessageListener {
 
     override fun onMessageReadReceipts(receipts: MutableList<ChatMessageReadReceipt>?) {}
 
-    override fun onReadReceiptForGroupMessageUpdated() {}
-
     override fun onMessageDelivered(messages: MutableList<ChatMessage>?) {}
 
     override fun onMessageRecalledWithExt(recallMessageInfo: MutableList<ChatRecallMessageInfo>?) {}
