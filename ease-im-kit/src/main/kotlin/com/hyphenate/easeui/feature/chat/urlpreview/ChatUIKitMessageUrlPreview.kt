@@ -95,7 +95,16 @@ class ChatUIKitMessageUrlPreview @JvmOverloads constructor(
             bean?.let {
                 updateView(bean,statusCallback)
             }?:kotlin.run {
-                val content = (it.body as ChatTextMessageBody).message
+                val body = it.body
+                if (body == null) {
+                    ChatLog.e("UrlPreview", "checkPreview: message body is null, msgId:${it.msgId}")
+                    return
+                }
+                if (body !is ChatTextMessageBody) {
+                    ChatLog.e("UrlPreview", "checkPreview: message body is not a text body, msgId:${it.msgId}")
+                    return
+                }
+                val content = body.message
                 tvUrl.text = content
                 val spannable = tvUrl.text.toSpannable()
                 val spans = spannable.getSpans(0, spannable.length, URLSpan::class.java)
