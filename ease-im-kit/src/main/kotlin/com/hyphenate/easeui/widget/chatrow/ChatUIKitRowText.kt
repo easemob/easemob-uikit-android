@@ -15,6 +15,7 @@ import com.hyphenate.easeui.R
 import com.hyphenate.easeui.common.ChatClient
 import com.hyphenate.easeui.common.ChatMessageDirection
 import com.hyphenate.easeui.common.ChatTextMessageBody
+import com.hyphenate.easeui.common.ChatType
 import com.hyphenate.easeui.common.ChatUIKitConstant
 import com.hyphenate.easeui.common.extensions.addChildView
 import com.hyphenate.easeui.common.extensions.containsChild
@@ -121,8 +122,9 @@ open class ChatUIKitRowText @JvmOverloads constructor(
         super.onMessageSuccess()
 
         message?.run {
-            // Show "1 Read" if this msg is a ding-type msg.
-            if (isSend() && ChatUIKitDingMessageHelper.get().isDingMessage(this)) {
+            // Show "1 Read" if this msg is a ding-type msg. Only applies to group chat,
+            // single chat messages may also have isNeedReadReceipt set for read receipts.
+            if (isSend() && chatType == ChatType.GroupChat && ChatUIKitDingMessageHelper.get().isDingMessage(this)) {
                 ackedView?.let {
                     it.visibility = View.VISIBLE
                     it.text = context.getString(R.string.uikit_group_ack_read_count, readReceiptCount())
