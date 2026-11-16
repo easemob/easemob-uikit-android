@@ -1,0 +1,115 @@
+// 声网自建 Maven 仓库发布专用（emclient-android/scripts/publish_shengwang_repo.sh uikit 调用）。
+// 将 aar/pom/module/sources/javadoc 及 GPG 签名发布到本地 build/manual-maven 目录，
+// 由发版脚本打成 Easemob_CHAT_UIKIT_aar_for_Android_v${SDK_VERSION}.zip，
+// 上传 OSS 后提交 Rehoboam，最终发布到 https://download.shengwang.cn/maven/。
+// 本文件不上传任何远程 Maven 仓库；原 MavenCentral 流程（maven-push-release.gradle）不受影响。
+// 坐标与 POM 沿用 maven-push-release.gradle；manual 仓库模式参考 SDK 的
+// emclient-android/hyphenatechatsdk/maven-push-shengwang-repo.gradle，
+// dokka javadoc/sources 打包参考 maven-push-shengwang-release.gradle。
+
+apply {
+    plugin 'maven-publish'
+    plugin 'signing'
+    plugin 'org.jetbrains.dokka'
+}
+
+group = "io.hyphenate"
+archivesBaseName = "ease-chat-kit"
+version = project.sdkVersion//发布aar的库版本
+
+//指定signing的相关信息：使用 Gradle 全局属性（~/.gradle/gradle.properties 中的 signing.*）
+gradle.taskGraph.whenReady { taskGraph ->
+    if (taskGraph.allTasks.any { it instanceof Sign }) {
+        def id = project.findProperty('signing.keyId')
+        def keyFile = project.findProperty('signing.secretKeyRingFile')
+        def password = project.findProperty('signing.password')
+        if (id == null || keyFile == null || password == null) {
+            throw new GradleException("缺少 signing.* 配置，请在 ~/.gradle/gradle.properties 设置 signing.keyId/signing.secretKeyRingFile/signing.password")
+        }
+
+        println "key id: $id file: $keyFile password: ${password ? '******' : 'null'}"
+        allprojects { ext."signing.keyId" = id }
+        allprojects { ext."signing.secretKeyRingFile" = keyFile }
+        allprojects { ext."signing.password" = password }
+    }
+}
+
+task javadocJar(type: Jar, dependsOn: 'dokkaJavadoc') {
+    archiveClassifier = 'javadoc'
+    from "$buildDir/dokka/javadoc"
+}
+
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.kotlin.srcDirs
+    archiveClassifier = 'sources'
+}
+
+android {
+    publishing {
+        singleVariant('release') {
+        }
+    }
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                groupId = group
+                artifactId = archivesBaseName
+                version = project.sdkVersion
+
+                afterEvaluate {
+                    from components.release
+                }
+                // 设置要发布的文件
+                artifact sourcesJar
+                artifact javadocJar
+
+                signing.sign publishing.publications.release
+
+                // POM 元数据与 maven-push-release.gradle（MavenCentral）保持一致
+                pom {
+                    name = archivesBaseName
+                    description = "Easy UI for Easemob IM SDK"
+                    url = "https://github.com/easemob/chatuikit-android"
+                    inceptionYear = "2025"
+                    licenses {
+                        license {
+                            name = "The Apache Software License, Version 2.0"
+                            url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                            distribution = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                        }
+                    }
+                    developers {
+                        developer {
+                            id = "Easemob"
+                            name = "Easemob"
+                            email = "sdk-tools@easemob.com"
+                        }
+                    }
+                    scm {
+                        connection = "scm:git@github.com:easemob/chatuikit-android.git"
+                        developerConnection = "scm:git@github.com:easemob/chatuikit-android.git"
+                        url = "https://github.com/easemob/chatuikit-android.git"
+                    }
+                }
+            }
+        }
+        repositories {
+            // 只发布到本地目录，由发版脚本打包上传，不配置任何远程仓库
+            maven {
+                name = "manual"
+                url = uri("${rootProject.buildDir}/manual-maven")
+            }
+        }
+    }
+
+    getTasksByName("javadocJar", false).each { task ->
+        task.mustRunAfter(dokkaJavadoc)
+    }
+    getTasksByName("signReleasePublication", false).each { task ->
+        task.mustRunAfter(sourcesJar)
+        task.mustRunAfter(javadocJar)
+    }
+}
