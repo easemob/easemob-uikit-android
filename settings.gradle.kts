@@ -12,6 +12,7 @@ dependencyResolutionManagement {
         //maven { setUrl("https://maven.aliyun.com/repository/public") }
         google()
         mavenCentral()
+        maven { url = uri("https://download.shengwang.cn/maven/") }
     }
 }
 
